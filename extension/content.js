@@ -53,16 +53,33 @@
   const onTime = () => report(false);
   const onStop = () => report(true);
 
+  // Some sites change episode without leaving the page: the same <video> loads a new source.
+  // That is the moment the page text is about to change too, so tell the background (which
+  // pauses saving until the new episode is read) and let the top frame look again.
+  let hadMedia = false;
+  const onMedia = () => { if (video && (video.duration || 0) > 45) hadMedia = true; };
+  const onNewMedia = () => {
+    if (!hadMedia) return; // first load of this player: nothing stale to guard
+    hadMedia = false;
+    send({ type: "mediaChanged" });
+  };
+
   function attach(v) {
     if (v === video) return;
     if (video) {
       video.removeEventListener("timeupdate", onTime);
       ["pause", "ended", "seeked"].forEach((e) => video.removeEventListener(e, onStop));
+      ["durationchange", "loadedmetadata"].forEach((e) => video.removeEventListener(e, onMedia));
+      ["loadstart", "emptied"].forEach((e) => video.removeEventListener(e, onNewMedia));
     }
     video = v;
+    hadMedia = false;
     if (!v) return;
     v.addEventListener("timeupdate", onTime);
     ["pause", "ended", "seeked"].forEach((e) => v.addEventListener(e, onStop));
+    ["durationchange", "loadedmetadata"].forEach((e) => v.addEventListener(e, onMedia));
+    ["loadstart", "emptied"].forEach((e) => v.addEventListener(e, onNewMedia));
+    onMedia();
     report(true);
   }
 
@@ -165,6 +182,24 @@
 
   announce();
   setInterval(announce, 2000);
+
+  // The page text changes when the site swaps episodes in place: look again soon after
+  // any DOM change instead of waiting for the next poll.
+  let lookTimer = null;
+  new MutationObserver(() => {
+    if (lookTimer) return;
+    lookTimer = setTimeout(() => { lookTimer = null; announce(); }, 800);
+  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+
+  // A player (possibly in an iframe) loaded new media: re-send what this page says, even if
+  // it looks unchanged, and check again as the heading catches up.
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type !== "reannounce") return;
+    lastSignature = "";
+    announce();
+    setTimeout(announce, 700);
+    setTimeout(announce, 2000);
+  });
 
   /* ---------------- resume chip ---------------- */
 

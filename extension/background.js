@@ -4,6 +4,7 @@ importScripts("lib/core.js", "lib/catalog.js", "lib/accounts.js", "lib/anilist-s
 const DB_KEY = "ks:db";
 const SETTINGS_KEY = "ks:settings";
 const SAVE_EVERY_MS = 5000;
+const PENDING_MS = 5000; // after new media loads, hold saves this long for the page to name the new episode
 const START_AFTER = 60; // seconds of playback before AniList is told you are watching it
 const MIN_SAVE_TIME = 5; // seconds into a video before it counts as watched
 
@@ -96,6 +97,11 @@ function identity(tab) {
  * and never one without an episode number: an unknown episode would file every
  * episode of the series into one slot and sync you into the wrong episode.
  */
+const isPending = (tab) => !!tab.pendingUntil && Date.now() < tab.pendingUntil;
+
+/** What detection said, as one comparable string. */
+const detectedKey = (m) => (m && m.series ? `${KS.seriesKey(m.series)}|${m.episode == null ? "" : m.episode}` : "");
+
 function savable(id) {
   if (!id) return false;
   if (id.corrected) return true;
@@ -437,7 +443,17 @@ async function handle(msg, sender) {
       // Top frame reports page identity; reply with a resume offer if one exists.
       return withTab(tabId, async (tab) => {
         const changed = !tab.meta || tab.meta.url !== msg.meta.url || tab.meta.series !== msg.meta.series || tab.meta.episode !== msg.meta.episode;
+        // The page now names a different episode: what the player last reported belongs to the old one.
+        const switched = !!(tab.meta && tab.meta.series && msg.meta.series && (tab.meta.series !== msg.meta.series || tab.meta.episode !== msg.meta.episode));
         tab.meta = msg.meta;
+        if (switched) {
+          tab.video = null;
+          delete tab.pendingUntil;
+          // A correction describes the episode the user fixed. Once the page confidently says
+          // something else, the player has moved on and the correction no longer applies.
+          const sure = (msg.meta.confidence === "high" || msg.meta.confidence === "medium") && msg.meta.kind !== "unknown";
+          if (tab.override && sure && tab.override.detected !== detectedKey(msg.meta)) delete tab.override;
+        }
         delete tab.library; // a playing page in this tab is not the library
         if (changed) tab.lastSave = 0; // a new episode saves on the next tick
         const who = identity(tab);
@@ -455,6 +471,11 @@ async function handle(msg, sender) {
       return withTab(tabId, async (tab) => {
         tab.video = msg.video;
         tab.videoFrameId = sender.frameId;
+        if (isPending(tab)) {
+          // New media is loading but the page has not named the episode yet: do not file it under the old one.
+          tab.saveStatus = { saved: false, reason: "Reading which episode this is…", at: Date.now() };
+          return { ok: true };
+        }
         const playing = !msg.video.paused && !msg.video.ended;
         badge(tabId, playing && savable(identity(tab)));
         if (savable(identity(tab)) && (await holdForSync(tabId, tab))) return { ok: true };
@@ -462,6 +483,17 @@ async function handle(msg, sender) {
         await saveProgress(tab, !!msg.force && savable(identity(tab)));
         return { ok: true };
       });
+    }
+
+    case "mediaChanged": {
+      // A player swapped its media without a page change (in-place episode switch).
+      await withTab(tabId, async (tab) => {
+        tab.pendingUntil = Date.now() + PENDING_MS;
+        tab.lastSave = 0;
+        tab.video = null;
+      });
+      chrome.tabs.sendMessage(tabId, { type: "reannounce" }, { frameId: 0 }).catch(() => {});
+      return { ok: true };
     }
 
     case "getTab": {
@@ -490,7 +522,7 @@ async function handle(msg, sender) {
     case "correct": {
       // Popup: user fixes (or confirms) the detected title/episode for this page.
       return withTab(tabId, async (tab) => {
-        tab.override = { url: tab.meta && tab.meta.url, series: msg.series, episode: msg.episode };
+        tab.override = { url: tab.meta && tab.meta.url, series: msg.series, episode: msg.episode, detected: detectedKey(tab.meta) };
         if (tab.meta && tab.meta.series && KS.seriesKey(tab.meta.series) !== KS.seriesKey(msg.series)) {
           // Teach the database: this detected title belongs to the corrected series.
           await mutate({ type: "alias", from: tab.meta.series, to: msg.series });

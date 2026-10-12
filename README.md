@@ -61,6 +61,13 @@ Judul halaman hanyalah sumber terakhir. `detect.js` mencoba sumber dari yang pal
 
 Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman navigasi seperti "Beranda", "Browse", atau "Home" tidak pernah dianggap judul. Tebakan yang lemah ditampilkan di popup; tekan Enter (atau *Mark now*) untuk mengonfirmasi.
 
+**Situs yang ganti episode tanpa pindah halaman.** Banyak situs memuat episode berikutnya di halaman yang sama, dengan URL yang tidak berubah. Supaya mark tidak salah masuk:
+- Begitu pemutar memuat media baru (`loadstart` / `emptied`, juga dari dalam iframe), penyimpanan ditahan sampai 5 detik ("Reading which episode this is…") dan halaman induk diminta membaca ulang judul dan episodenya.
+- Perubahan isi halaman (judul, heading, label episode) memicu pembacaan ulang dalam kurang dari 1 detik, tidak lagi menunggu polling 2 detik.
+- Jawaban yang yakin tidak lagi "menempel" selama URL sama. Jawaban itu hanya dipakai kalau judul dan heading halaman masih sama seperti saat dibaca.
+- Posisi video dari episode sebelumnya dibuang saat halaman menyebut episode lain, jadi tidak ikut tersimpan atau memicu sync ke episode yang salah.
+- Koreksi manual di popup gugur begitu halaman dengan yakin menyebut episode lain.
+
 **Kalau deteksi gagal**, buka popup lalu klik *How this was detected*. Bagian itu menampilkan hasil setiap pembaca, misalnya `page-world: netflix: metadata not readable` atau `page-title: nothing`. Kirim isinya kalau ada situs yang belum terbaca.
 
 **Koreksi.** Kalau tebakannya salah, perbaiki di popup extension. Koreksi itu disimpan sebagai *alias*, jadi judul yang sama di situs tersebut otomatis masuk ke series yang benar di kunjungan berikutnya. Saat menambahkan series dari AniList/TVmaze/IMDb, judul romaji dan Inggrisnya juga didaftarkan sebagai alias.

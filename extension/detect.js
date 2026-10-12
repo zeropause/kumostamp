@@ -274,7 +274,14 @@
 
   // Overlays come and go with the player controls: once a URL has a confident
   // answer, keep it until the URL changes or a different confident answer appears.
+  // Sites that swap episodes in place keep the URL, so the answer is also tied to what
+  // the page printed when it was read (title and heading): when those change, it is stale.
   let sticky = null;
+
+  function pageFingerprint() {
+    const h1 = document.querySelector("h1");
+    return `${location.href}|${document.title}|${h1 ? h1.textContent.replace(/\s+/g, " ").trim().slice(0, 120) : ""}`;
+  }
 
   function detect() {
     let best = null;
@@ -291,8 +298,8 @@
       if (better) best = r;
       if (r.confidence === "high" && r.kind !== "unknown") break;
     }
-    if (best && best.confidence === "high" && best.kind !== "unknown") sticky = { url: location.href, r: best };
-    else if (sticky && sticky.url === location.href) best = sticky.r;
+    if (best && best.confidence === "high" && best.kind !== "unknown") sticky = { url: location.href, print: pageFingerprint(), r: best };
+    else if (sticky && sticky.url === location.href && sticky.print === pageFingerprint()) best = sticky.r;
     const out = Object.assign({}, best || { series: "", episode: null, confidence: "none", source: "none" });
     const ids = urlIds();
     if (ids) out.ids = Object.assign({}, out.ids, ids);
