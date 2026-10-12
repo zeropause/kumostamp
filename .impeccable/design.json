@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-11T08:12:40.564Z",
+  "title": "Design System: Kumotstamp",
+  "extensions": {
+    "colorMeta": {
+      "red-pencil": {
+        "role": "primary",
+        "displayName": "Red Pencil",
+        "canonical": "#d23a2c",
+        "cssVar": "--red",
+        "purpose": "The stop mark: ruler mark, Continue band timecode, Resume / Jump fill.",
+        "tonalRamp": [
+          "#270000",
+          "#560000",
+          "#8a0000",
+          "#b5160d",
+          "#dc4738",
+          "#f27f6e",
+          "#ffb0a3",
+          "#ffe1d8"
+        ]
+      },
+      "red-pencil-ink": {
+        "role": "primary",
+        "displayName": "Red Pencil Ink",
+        "canonical": "#b52c20",
+        "cssVar": "--red-ink",
+        "purpose": "Small timecodes and Resume hover.",
+        "tonalRamp": [
+          "#260000",
+          "#530000",
+          "#850000",
+          "#af251a",
+          "#d64f3f",
+          "#ec8373",
+          "#ffb3a6",
+          "#ffe2da"
+        ]
+      },
+      "red-wash": {
+        "role": "primary",
+        "displayName": "Red Wash",
+        "canonical": "#f6dcd6",
+        "cssVar": "--red-wash",
+        "purpose": "Ruler fill up to the stop mark.",
+        "tonalRamp": [
+          "#110907",
+          "#2f211e",
+          "#503d38",
+          "#715b56",
+          "#937c77",
+          "#b3a09c",
+          "#d3c6c3",
+          "#f4eceb"
+        ]
+      },
+      "on-red": {
+        "role": "primary",
+        "displayName": "On Red",
+        "canonical": "#ffffff",
+        "cssVar": "--on-red",
+        "purpose": "Label on the Resume / Jump fill.",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "blue-pencil": {
+        "role": "secondary",
+        "displayName": "Blue Pencil",
+        "canonical": "#2d5fb8",
+        "cssVar": "--blue",
+        "purpose": "Finished; focus ring.",
+        "tonalRamp": [
+          "#00072a",
+          "#011f59",
+          "#0c3b8d",
+          "#2b5db5",
+          "#4c80da",
+          "#7ca5ed",
+          "#accafe",
+          "#def0ff"
+        ]
+      },
+      "blue-wash": {
+        "role": "secondary",
+        "displayName": "Blue Wash",
+        "canonical": "#dbe4f5",
+        "cssVar": "--blue-wash",
+        "purpose": "Finished ruler fill.",
+        "tonalRamp": [
+          "#080b11",
+          "#20252e",
+          "#3b424f",
+          "#5a6170",
+          "#7b8392",
+          "#9fa5b1",
+          "#c5c9d2",
+          "#eceef4"
+        ]
+      },
+      "print-cyan": {
+        "role": "tertiary",
+        "displayName": "Print Cyan",
+        "canonical": "#cfe5ea",
+        "cssVar": "--print",
+        "purpose": "Printed fill: title block, table heads, selected segment.",
+        "tonalRamp": [
+          "#060d0e",
+          "#1b272a",
+          "#344549",
+          "#526569",
+          "#73868b",
+          "#99a8ac",
+          "#c0cbce",
+          "#e9f0f1"
+        ]
+      },
+      "rule-hairline": {
+        "role": "tertiary",
+        "displayName": "Hairline Rule",
+        "canonical": "#a9cfd9",
+        "cssVar": "--rule",
+        "purpose": "Row rules, page ruling, minute ticks.",
+        "tonalRamp": [
+          "#020d11",
+          "#12292f",
+          "#274850",
+          "#456871",
+          "#668992",
+          "#8fabb2",
+          "#bacdd2",
+          "#e5f1f4"
+        ]
+      },
+      "rule-printed": {
+        "role": "tertiary",
+        "displayName": "Printed Rule",
+        "canonical": "#3d8fa8",
+        "cssVar": "--rule-strong",
+        "purpose": "Cell borders, strokes, 5-minute ticks, 2px dividers.",
+        "tonalRamp": [
+          "#000f18",
+          "#002b3b",
+          "#004b61",
+          "#0d6c84",
+          "#3e8ea7",
+          "#76afc2",
+          "#a9d1df",
+          "#dcf3fb"
+        ]
+      },
+      "rule-ink": {
+        "role": "tertiary",
+        "displayName": "Rule Ink",
+        "canonical": "#23677d",
+        "cssVar": "--rule-ink",
+        "purpose": "Form-printed labels and meta text.",
+        "tonalRamp": [
+          "#000e17",
+          "#002a38",
+          "#004a5e",
+          "#276a80",
+          "#4c8ca3",
+          "#7eadbf",
+          "#aecfdc",
+          "#dff2fa"
+        ]
+      },
+      "sheet-paper": {
+        "role": "neutral",
+        "displayName": "Sheet Paper",
+        "canonical": "#eef1ea",
+        "cssVar": "--paper",
+        "purpose": "Ground and cell fill; pale green-grey, not cream.",
+        "tonalRamp": [
+          "#0b0c09",
+          "#242622",
+          "#41433e",
+          "#60625c",
+          "#81837d",
+          "#a4a6a1",
+          "#c8cac6",
+          "#eeefed"
+        ]
+      },
+      "sheet-paper-2": {
+        "role": "neutral",
+        "displayName": "Sheet Paper 2",
+        "canonical": "#e2e8df",
+        "cssVar": "--paper-2",
+        "purpose": "Hover fill, add panel.",
+        "tonalRamp": [
+          "#0a0c09",
+          "#232621",
+          "#3f443d",
+          "#5e635b",
+          "#7f847c",
+          "#a2a7a0",
+          "#c7cac6",
+          "#edefec"
+        ]
+      },
+      "sheet-paper-3": {
+        "role": "neutral",
+        "displayName": "Sheet Paper 3",
+        "canonical": "#d5ddd2",
+        "cssVar": "--paper-3",
+        "purpose": "Deepest paper step.",
+        "tonalRamp": [
+          "#090c09",
+          "#222721",
+          "#3e443c",
+          "#5d645a",
+          "#7e857b",
+          "#a1a79f",
+          "#c6cbc5",
+          "#edefec"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1b1f1d",
+        "cssVar": "--ink",
+        "purpose": "Primary text; ink buttons, toast.",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#232624",
+          "#3f4341",
+          "#5e6260",
+          "#7f8481",
+          "#a2a6a4",
+          "#c7cac8",
+          "#edefee"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#48514c",
+        "cssVar": "--ink-2",
+        "purpose": "Secondary copy.",
+        "tonalRamp": [
+          "#090c0a",
+          "#212723",
+          "#3c4440",
+          "#5b645f",
+          "#7b8580",
+          "#9fa7a3",
+          "#c5cbc7",
+          "#ecefed"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#5c6560",
+        "cssVar": "--ink-3",
+        "purpose": "Quiet metadata.",
+        "tonalRamp": [
+          "#090c0a",
+          "#212723",
+          "#3c4440",
+          "#5b645f",
+          "#7c8580",
+          "#a0a7a3",
+          "#c5cbc8",
+          "#ecefed"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Sheet Paper",
+        "canonical": "#121816",
+        "cssVar": "--paper",
+        "purpose": "Night sheet value of Sheet Paper (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#090c0b",
+          "#222625",
+          "#3d4441",
+          "#5c6361",
+          "#7d8482",
+          "#a1a7a4",
+          "#c6cac9",
+          "#ecefee"
+        ]
+      },
+      "night-paper-2": {
+        "role": "neutral",
+        "displayName": "Night Sheet Paper 2",
+        "canonical": "#18201d",
+        "cssVar": "--paper-2",
+        "purpose": "Night sheet value of Sheet Paper 2 (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#090c0b",
+          "#212724",
+          "#3c4441",
+          "#5a6460",
+          "#7b8581",
+          "#9fa7a4",
+          "#c5cbc8",
+          "#ecefee"
+        ]
+      },
+      "night-print": {
+        "role": "tertiary",
+        "displayName": "Night Print Cyan",
+        "canonical": "#16313a",
+        "cssVar": "--print",
+        "purpose": "Night sheet value of Print Cyan (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#040d11",
+          "#16282e",
+          "#2d464f",
+          "#4a6670",
+          "#6b8892",
+          "#93a9b2",
+          "#bcccd2",
+          "#e7f0f4"
+        ]
+      },
+      "night-rule-hairline": {
+        "role": "tertiary",
+        "displayName": "Night Hairline Rule",
+        "canonical": "#22414a",
+        "cssVar": "--rule",
+        "purpose": "Night sheet value of Hairline Rule (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#030d11",
+          "#14292f",
+          "#2a4750",
+          "#476771",
+          "#688892",
+          "#91aab2",
+          "#bbcdd2",
+          "#e6f1f4"
+        ]
+      },
+      "night-rule-printed": {
+        "role": "tertiary",
+        "displayName": "Night Printed Rule",
+        "canonical": "#4ea4bd",
+        "cssVar": "--rule-strong",
+        "purpose": "Night sheet value of Printed Rule (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#000f18",
+          "#002c3b",
+          "#004c61",
+          "#006d84",
+          "#388fa7",
+          "#73b0c3",
+          "#a7d1df",
+          "#dcf3fb"
+        ]
+      },
+      "night-rule-ink": {
+        "role": "tertiary",
+        "displayName": "Night Rule Ink",
+        "canonical": "#8fd0e2",
+        "cssVar": "--rule-ink",
+        "purpose": "Night sheet value of Rule Ink (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#000e15",
+          "#002b35",
+          "#014a59",
+          "#296b7b",
+          "#4e8d9d",
+          "#7faebb",
+          "#afd0d9",
+          "#e0f2f8"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#e4ebe5",
+        "cssVar": "--ink",
+        "purpose": "Night sheet value of Ink (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#222623",
+          "#3e443f",
+          "#5d635e",
+          "#7e847f",
+          "#a2a6a2",
+          "#c7cac7",
+          "#edefed"
+        ]
+      },
+      "night-red-pencil": {
+        "role": "primary",
+        "displayName": "Night Red Pencil",
+        "canonical": "#ff6a55",
+        "cssVar": "--red",
+        "purpose": "Night sheet value of Red Pencil (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#270000",
+          "#550000",
+          "#880000",
+          "#b31d0d",
+          "#da4a38",
+          "#f0806e",
+          "#ffb1a3",
+          "#ffe1d8"
+        ]
+      },
+      "night-red-pencil-ink": {
+        "role": "primary",
+        "displayName": "Night Red Pencil Ink",
+        "canonical": "#ff8a78",
+        "cssVar": "--red-ink",
+        "purpose": "Night sheet value of Red Pencil Ink (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#220000",
+          "#4c0200",
+          "#7b140a",
+          "#a4372a",
+          "#ca5c4c",
+          "#e18a7c",
+          "#f7b7ac",
+          "#ffe4dd"
+        ]
+      },
+      "night-blue-pencil": {
+        "role": "secondary",
+        "displayName": "Night Blue Pencil",
+        "canonical": "#7ea6ff",
+        "cssVar": "--blue",
+        "purpose": "Night sheet value of Blue Pencil (prefers-color-scheme: dark).",
+        "tonalRamp": [
+          "#010727",
+          "#0c2055",
+          "#1e3b86",
+          "#3a5cae",
+          "#5a7fd3",
+          "#85a4e7",
+          "#b2c9f9",
+          "#e1efff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Continue band series title, wordmark, empty-state heading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Series sheet titles, add panel heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Search result titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Synopses, hints, toasts."
+      },
+      "label": {
+        "displayName": "Form Label",
+        "purpose": "11px condensed caps naming a value in its cell; table heads."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Buttons and segmented controls."
+      },
+      "timecode-display": {
+        "displayName": "Timecode Display",
+        "purpose": "Continue band stop time."
+      },
+      "timecode": {
+        "displayName": "Timecode",
+        "purpose": "Row stop times, episode boxes, counts."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper-lift",
+        "value": "0 1px 0 rgba(255,255,255,.7) inset, 0 18px 40px -24px rgba(16,48,56,.45)",
+        "purpose": "Series sheets only."
+      },
+      {
+        "name": "paper-lift-night",
+        "value": "0 18px 40px -24px rgba(0,0,0,.8)",
+        "purpose": "Series sheets on the night sheet."
+      },
+      {
+        "name": "floating-slip",
+        "value": "0 14px 34px -14px rgba(0,0,0,.55)",
+        "purpose": "Toast."
+      },
+      {
+        "name": "chip-slip",
+        "value": "0 10px 28px -8px rgba(10,30,30,.45)",
+        "purpose": "In-page resume chip."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px var(--focus)",
+        "purpose": "Whole-cell focus on search and filter boxes."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "All entrances and state transitions."
+      },
+      {
+        "name": "pencil",
+        "value": "scaleY(0) to 1, .7s ease-out, 40ms stagger, 120ms delay",
+        "purpose": "Ruler marks draw in on first paint."
+      },
+      {
+        "name": "wash",
+        "value": "scaleX(0) to 1, .9s ease-out",
+        "purpose": "Continue band ruler wash on first paint."
+      },
+      {
+        "name": "arrive",
+        "value": "1.4s ease-out ring of printed rule",
+        "purpose": "Newly added sheet."
+      },
+      {
+        "name": "button-state",
+        "value": "background .15s; transform .2s ease-out",
+        "purpose": "Button hover and press."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none",
+        "purpose": "prefers-reduced-motion removes all motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "1080px"
+      },
+      {
+        "name": "mobile",
+        "value": "720px"
+      },
+      {
+        "name": "popup",
+        "value": "368px fixed width"
+      }
+    ],
+    "themes": [
+      {
+        "name": "night-sheet",
+        "trigger": "prefers-color-scheme: dark (unless data-theme=\"light\"), or data-theme=\"dark\"",
+        "purpose": "Same form in phosphor cyan on blue-black; all roles kept."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Default boxed button: paper fill, printed-rule stroke.",
+      "html": "<button class=\"ds-btn\">Search</button>",
+      "css": ".ds-btn{appearance:none;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid var(--rule-strong,#3d8fa8);border-radius:0;background:var(--paper,#eef1ea);color:var(--ink,#1b1f1d);font:600 17px/1 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);letter-spacing:.02em;cursor:pointer;transition:background-color .15s,transform .2s cubic-bezier(.16,1,.3,1)}.ds-btn:hover{background:var(--paper-2,#e2e8df)}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:2px}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Primary action for everything except resuming.",
+      "html": "<button class=\"ds-btn-ink\">Add a series</button>",
+      "css": ".ds-btn-ink{appearance:none;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid var(--ink,#1b1f1d);border-radius:0;background:var(--ink,#1b1f1d);color:var(--paper,#eef1ea);font:600 17px/1 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);letter-spacing:.02em;cursor:pointer;transition:background-color .15s,transform .2s cubic-bezier(.16,1,.3,1)}.ds-btn-ink:hover{background:color-mix(in srgb,var(--ink,#1b1f1d) 82%,var(--rule-strong,#3d8fa8))}.ds-btn-ink:active{transform:translateY(1px)}.ds-btn-ink:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:2px}"
+    },
+    {
+      "name": "Resume Button",
+      "kind": "button",
+      "refersTo": "button-resume",
+      "description": "Red pencil fill; only for Resume / Jump to the stop mark.",
+      "html": "<a class=\"ds-btn-resume\" href=\"#\">Resume on crunchyroll.com</a>",
+      "css": ".ds-btn-resume{display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 22px;border:1px solid var(--red,#d23a2c);border-radius:0;background:var(--red,#d23a2c);color:var(--on-red,#fff);font:600 20px/1 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);letter-spacing:.02em;text-decoration:none;transition:background-color .15s,transform .2s cubic-bezier(.16,1,.3,1)}.ds-btn-resume:hover{background:var(--red-ink,#b52c20);border-color:var(--red-ink,#b52c20)}.ds-btn-resume:active{transform:translateY(1px)}.ds-btn-resume:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:2px}"
+    },
+    {
+      "name": "Filter Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Boxed field; the whole cell rings blue on focus.",
+      "html": "<label class=\"ds-filter\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input placeholder=\"Filter series\"></label>",
+      "css": ".ds-filter{display:flex;align-items:center;gap:8px;padding:0 12px;min-height:42px;max-width:420px;border:1px solid var(--rule-strong,#3d8fa8);background:var(--paper,#eef1ea);color:var(--ink-3,#5c6560)}.ds-filter:focus-within{box-shadow:0 0 0 2px var(--focus,#2d5fb8)}.ds-filter input{flex:1;min-width:0;border:0;background:none;outline:none;padding:8px 0;font:16px/1.5 var(--font-body,Barlow, system-ui, sans-serif);color:var(--ink,#1b1f1d)}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Ruled cells; selected takes print cyan with a printed underline.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"true\">All</button><button role=\"radio\" aria-checked=\"false\">Watching</button><button role=\"radio\" aria-checked=\"false\">Finished</button></div>",
+      "css": ".ds-seg{display:inline-flex;border:1px solid var(--rule-strong,#3d8fa8);background:var(--paper,#eef1ea)}.ds-seg button{appearance:none;border:0;background:none;cursor:pointer;padding:0 14px;min-height:40px;font:600 16px/1 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);color:var(--ink-2,#48514c)}.ds-seg button+button{border-left:1px solid var(--rule-strong,#3d8fa8)}.ds-seg button[aria-checked=\"true\"]{background:var(--print,#cfe5ea);color:var(--ink,#1b1f1d);box-shadow:inset 0 -3px 0 var(--rule-strong,#3d8fa8)}.ds-seg button:hover:not([aria-checked=\"true\"]){background:var(--paper-2,#e2e8df)}.ds-seg button:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:2px}"
+    },
+    {
+      "name": "Provider Tag",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Boxed provider link with its last mono time.",
+      "html": "<a class=\"ds-prov\" href=\"#\">crunchyroll.com <span>21:40</span></a>",
+      "css": ".ds-prov{display:inline-flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--rule-strong,#3d8fa8);background:var(--paper,#eef1ea);color:var(--ink,#1b1f1d);text-decoration:none;font:13px/1.5 var(--font-body,Barlow, system-ui, sans-serif)}.ds-prov span{font:500 12px var(--font-time,\"JetBrains Mono\", ui-monospace, monospace);color:var(--ink-3,#5c6560);font-variant-numeric:tabular-nums}.ds-prov:hover{border-color:var(--ink,#1b1f1d);background:var(--print,#cfe5ea)}.ds-prov:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:2px}"
+    },
+    {
+      "name": "Title Block",
+      "kind": "custom",
+      "refersTo": "header-cell",
+      "description": "Printed header: print-cyan cells, each label naming the value beneath it.",
+      "html": "<div class=\"ds-tb\"><div class=\"ds-tb-cell\"><span class=\"ds-tb-label\">Series</span><span class=\"ds-tb-name\">Kumotstamp</span></div><div class=\"ds-tb-cell\"><span class=\"ds-tb-label\">Marks</span><span class=\"ds-tb-val\">14</span></div></div>",
+      "css": ".ds-tb{display:grid;grid-template-columns:1fr 110px;background:var(--print,#cfe5ea);border-bottom:2px solid var(--rule-strong,#3d8fa8);color:var(--ink,#1b1f1d)}.ds-tb-cell{padding:10px 20px 12px;display:flex;flex-direction:column;gap:4px}.ds-tb-cell+.ds-tb-cell{border-left:1px solid var(--rule-strong,#3d8fa8)}.ds-tb-label{font:600 11px/1.1 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);letter-spacing:.12em;text-transform:uppercase;color:var(--rule-ink,#23677d)}.ds-tb-name{font:700 36px/.95 var(--font-form,\"Barlow Condensed\", \"Arial Narrow\", sans-serif);letter-spacing:-.015em}.ds-tb-val{font:700 30px/1 var(--font-time,\"JetBrains Mono\", ui-monospace, monospace);font-variant-numeric:tabular-nums;letter-spacing:-.03em}"
+    },
+    {
+      "name": "Episode Row",
+      "kind": "custom",
+      "refersTo": "ep-box",
+      "description": "Episode box, ruler and red-ink timecode in a ruled table row.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-ep\">02</span><div class=\"ds-rr\" style=\"--pos:.62;--minutes:24\"><span></span></div><span class=\"ds-time\">14:52</span></div>",
+      "css": ".ds-row{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:12px;border-bottom:1px solid var(--rule,#a9cfd9);background:var(--paper,#eef1ea)}.ds-ep{min-width:44px;padding:5px 6px;text-align:center;border:1px solid var(--rule-strong,#3d8fa8);font:700 15px/1 var(--font-time,\"JetBrains Mono\", ui-monospace, monospace);font-variant-numeric:tabular-nums;color:var(--ink,#1b1f1d)}.ds-time{font:700 18px/1 var(--font-time,\"JetBrains Mono\", ui-monospace, monospace);font-variant-numeric:tabular-nums;color:var(--red-ink,#b52c20)}.ds-rr{position:relative;height:26px;border:1px solid var(--rule-strong,#3d8fa8);background:repeating-linear-gradient(to right,var(--rule-strong,#3d8fa8) 0 1px,transparent 1px calc(100% / var(--minutes) * 5)) bottom/100% 12px no-repeat,repeating-linear-gradient(to right,var(--rule,#a9cfd9) 0 1px,transparent 1px calc(100% / var(--minutes))) bottom/100% 7px no-repeat,linear-gradient(to right,var(--red-wash,#f6dcd6) calc(var(--pos) * 100%),transparent 0),var(--paper,#eef1ea)}.ds-rr span{position:absolute;top:-6px;bottom:-6px;left:calc(var(--pos) * 100%);width:3px;margin-left:-1.5px;background:var(--red,#d23a2c);border-radius:1.5px}"
+    },
+    {
+      "name": "Ruler",
+      "kind": "custom",
+      "refersTo": "ruler-xl",
+      "description": "Signature instrument: minute ticks, 5-minute heavy ticks, red pencil mark; click or arrow keys move the mark.",
+      "html": "<div class=\"ds-ruler-xl\" role=\"slider\" tabindex=\"0\" aria-label=\"Mark\" aria-valuemin=\"0\" aria-valuemax=\"1440\" aria-valuenow=\"576\" aria-valuetext=\"9:36\" style=\"--pos:.4;--minutes:24\"><span></span></div>",
+      "css": ".ds-ruler-xl{position:relative;height:44px;margin:12px 0;cursor:crosshair;border:1px solid var(--rule-strong,#3d8fa8);background:repeating-linear-gradient(to right,var(--rule-strong,#3d8fa8) 0 1px,transparent 1px calc(100% / var(--minutes) * 5)) bottom/100% 12px no-repeat,repeating-linear-gradient(to right,var(--rule,#a9cfd9) 0 1px,transparent 1px calc(100% / var(--minutes))) bottom/100% 7px no-repeat,linear-gradient(to right,var(--red-wash,#f6dcd6) calc(var(--pos) * 100%),transparent 0),var(--paper,#eef1ea)}.ds-ruler-xl span{position:absolute;top:-10px;bottom:-10px;left:calc(var(--pos) * 100%);width:5px;margin-left:-2.5px;background:var(--red,#d23a2c);border-radius:1.5px;transform-origin:50% 100%;animation:ds-pencil .7s cubic-bezier(.16,1,.3,1) both}.ds-ruler-xl:focus-visible{outline:2px solid var(--focus,#2d5fb8);outline-offset:3px}@keyframes ds-pencil{from{transform:scaleY(0)}}@media (prefers-reduced-motion:reduce){.ds-ruler-xl span{animation:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Animation Timesheet",
+    "overview": "Progress is drawn on an anime studio timesheet. Each series is a sheet, each episode a ruled row, and the place you stopped is a red-pencil mark on a minute ruler. The page is printed stationery that someone has written on: pale green-grey stock, cyan rules and header cells printed by the form, ink type, and two pencils that carry all the meaning. Red marks where you stopped. Blue marks what you finished.\n\nDensity is that of a working form, not a showcase. Everything sits in square boxed cells divided by printed rules on a 24px row pitch. Numbers are the content, so timecodes and episode numbers are set in a tabular monospace and allowed to get monumental (the Continue band timecode reaches 112px). Labels are small condensed caps printed in the form's cyan ink, the way 作品名 / 話数 / カット boxes are labelled on a real sheet.\n\nThe night sheet is the same form re-printed in phosphor cyan on blue-black stock. It appears only when the OS asks for dark, for the library or popup opened beside a playing video at night. Paper stays the canonical ground; the night sheet keeps every rule, cell and pencil role. The world refuses the streaming-app grid of poster cards on a dark ground.",
+    "keyCharacteristics": [
+      "Pale green-grey sheet paper, never cream, ruled in cyan on a 24px pitch.",
+      "Cyan print fill marks what the form printed: title-block cells and table heads.",
+      "Two pencils carry meaning: red for the stop, blue for finished.",
+      "Square boxed cells everywhere; no rounded cards.",
+      "Tabular monospace for every timecode and episode number; condensed caps for form labels.",
+      "The minute ruler is the signature instrument."
+    ],
+    "rules": [
+      {
+        "name": "The Two Pencils Rule",
+        "body": "Red is the stop mark and nothing else: the ruler mark and its wash, timecodes, and the Resume / Jump action. Blue is finished. Neither pencil is used for decoration, emphasis, or branding.",
+        "section": "colors"
+      },
+      {
+        "name": "The Printed Form Rule",
+        "body": "Cyan belongs to the form, not to the user. Anything the sheet \"printed\" (header cells, table heads, labels, rules) is cyan; anything the viewer \"wrote\" is ink or pencil.",
+        "section": "colors"
+      },
+      {
+        "name": "The Not-Cream Rule",
+        "body": "The paper is pale green-grey (`sheet-paper`). Warm cream or white grounds break the sheet.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Is For Numbers Rule",
+        "body": "JetBrains Mono sets timecodes, episode numbers, counts and time inputs only. Words never go in mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Printed Label Rule",
+        "body": "Form labels are 11px condensed caps in rule ink and always label a value in the same cell (Series, Marks, Episode, Stopped at). They name a field on the sheet. They are never a decorative line above a heading.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Lift Rule",
+        "body": "Only a sheet of paper lifts. Cells, buttons and inputs are flat and get their edge from a printed rule.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do rule every surface on the 24px row pitch and divide cells with 1px printed rules.",
+      "Do set every timecode and episode number in JetBrains Mono with tabular numerals.",
+      "Do keep red to the stop mark, its wash, timecodes, and the Resume / Jump action; use blue for finished.",
+      "Do use ink buttons for primary actions other than resuming.",
+      "Do use print cyan for what the form printed: header cells, table heads, selected filter segments.",
+      "Do keep every pencil and rule role intact on the night sheet; only the values change.",
+      "Do label header and field cells with 11px condensed caps in rule ink, paired with the value they name."
+    ],
+    "donts": [
+      "Don't round corners on cells, buttons, inputs, sheets or tags.",
+      "Don't use a cream or white paper ground.",
+      "Don't build a grid of poster cards on a dark ground; posters sit inside a sheet head.",
+      "Don't use red for errors, warnings, emphasis or branding.",
+      "Don't set words in mono or numbers in proportional figures.",
+      "Don't add shadows to cells or buttons; only sheets lift and only floating slips cast shadows.",
+      "Don't put a condensed-caps label above a heading as a kicker; labels name values in cells."
+    ]
+  }
+}

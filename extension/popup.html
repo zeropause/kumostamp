@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kumostamp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="form-head">
+    <div class="cell brand">
+      <span class="brand-lockup"><svg class="brand-mark" viewBox="-2 0 64 64" width="26" height="26" aria-hidden="true"><rect x="6" y="6" width="13" height="52" fill="currentColor"/><line x1="19" y1="32" x2="39.7" y2="14.67" stroke="currentColor" stroke-width="10"/><line x1="19" y1="32" x2="39.7" y2="49.33" stroke="var(--red)" stroke-width="10"/><path d="M42.42 5.99A35 35 0 0 1 42.42 58.01" fill="none" stroke="currentColor" stroke-width="4"/><line x1="47" y1="32" x2="52" y2="32" stroke="currentColor" stroke-width="3"/></svg><span class="brand-name">Kumostamp</span></span>
+    </div>
+    <a class="cell head-link" id="open-library" href="#" target="_blank" rel="noopener">
+      <span class="cell-label">Library</span>
+      <span class="head-link-text">Open
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+      </span>
+    </a>
+  </header>
+
+  <section class="now" id="now" aria-live="polite">
+    <!-- filled by popup.js -->
+  </section>
+
+  <section class="recent">
+    <h2 class="section-label">Recent marks</h2>
+    <ol id="recent" class="recent-list"></ol>
+  </section>
+
+  <footer class="foot">
+    <label class="switch">
+      <input type="checkbox" id="autosave">
+      <span class="switch-track" aria-hidden="true"></span>
+      <span>Keep marks automatically</span>
+    </label>
+    <label class="switch">
+      <input type="checkbox" id="autoresume">
+      <span class="switch-track" aria-hidden="true"></span>
+      <span>Sync to my mark on other sites</span>
+    </label>
+    <details class="settings" id="accounts">
+      <summary>Connected accounts</summary>
+      <div class="account">
+        <div class="account-row">
+          <span class="account-name">AniList</span>
+          <span class="account-state" id="anilist-state" aria-live="polite"></span>
+          <button type="button" class="btn btn-quiet" id="anilist-action">Connect</button>
+        </div>
+        <label class="switch" id="anilist-sync-row" hidden>
+          <input type="checkbox" id="anilist-sync">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span>Update my list when I finish an episode</span>
+        </label>
+        <div class="account-row" id="anilist-last-row" hidden>
+          <span class="account-state" id="anilist-last"></span>
+          <button type="button" class="btn btn-quiet" id="anilist-undo">Undo</button>
+        </div>
+        <p class="account-error" id="anilist-error" role="alert" hidden></p>
+        <form id="anilist-setup" hidden>
+          <input id="anilist-client" inputmode="numeric" spellcheck="false" placeholder="AniList client ID" aria-label="AniList client ID">
+          <button type="submit" class="btn btn-quiet">Save</button>
+        </form>
+        <p class="account-hint" id="anilist-hint" hidden>
+          Register an API client at anilist.co/settings/developer with this redirect URL:
+          <code id="anilist-redirect"></code>
+        </p>
+      </div>
+    </details>
+    <details class="settings">
+      <summary>Library address</summary>
+      <form id="settings-form">
+        <input id="library-url" type="url" required spellcheck="false" aria-label="Library address">
+        <button type="submit" class="btn btn-quiet">Save</button>
+      </form>
+    </details>
+  </footer>
+
+  <script src="lib/core.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

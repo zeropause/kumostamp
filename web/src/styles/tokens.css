@@ -1,0 +1,81 @@
+/* Kumostamp tokens — the animation timesheet.
+   Printed cyan rules on pale sheet paper; red pencil marks where you stopped,
+   blue pencil marks what you finished. Shared by web and extension popup. */
+:root {
+  --paper: #eef1ea;
+  --paper-2: #e2e8df;
+  --paper-3: #d5ddd2;
+  --print: #cfe5ea;          /* cyan print fill: form header cells */
+  --rule: #a9cfd9;           /* hairline sheet rules */
+  --rule-strong: #3d8fa8;    /* printed borders & labels */
+  --rule-ink: #23677d;       /* label text on print fill */
+  --ink: #1b1f1d;
+  --ink-2: #48514c;
+  --ink-3: #5c6560;
+  --red: #d23a2c;            /* red pencil: the stop mark */
+  --red-ink: #b52c20;
+  --red-wash: #f6dcd6;
+  --on-red: #ffffff;
+  --blue: #2d5fb8;           /* blue pencil: finished */
+  --blue-wash: #dbe4f5;
+  --focus: #2d5fb8;
+  --lift: 0 1px 0 rgba(255,255,255,.7) inset, 0 18px 40px -24px rgba(16, 48, 56, .45);
+
+  --font-form: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-time: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --row: 24px;               /* sheet row pitch: the page's spacing unit */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  color-scheme: light;
+}
+
+/* Night sheet: the same form printed in phosphor-cyan on blue-black stock. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121816;
+    --paper-2: #18201d;
+    --paper-3: #222c28;
+    --print: #16313a;
+    --rule: #22414a;
+    --rule-strong: #4ea4bd;
+    --rule-ink: #8fd0e2;
+    --ink: #e4ebe5;
+    --ink-2: #aeb9b2;
+    --ink-3: #85918a;
+    --red: #ff6a55;
+    --red-ink: #ff8a78;
+    --red-wash: #3a1d19;
+    --on-red: #1d0906;
+    --blue: #7ea6ff;
+    --blue-wash: #1c2840;
+    --focus: #7ea6ff;
+    --lift: 0 18px 40px -24px rgba(0, 0, 0, .8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121816;
+  --paper-2: #18201d;
+  --paper-3: #222c28;
+  --print: #16313a;
+  --rule: #22414a;
+  --rule-strong: #4ea4bd;
+  --rule-ink: #8fd0e2;
+  --ink: #e4ebe5;
+  --ink-2: #aeb9b2;
+  --ink-3: #85918a;
+  --red: #ff6a55;
+  --red-ink: #ff8a78;
+  --red-wash: #3a1d19;
+  --on-red: #1d0906;
+  --blue: #7ea6ff;
+  --blue-wash: #1c2840;
+  --focus: #7ea6ff;
+  --lift: 0 18px 40px -24px rgba(0, 0, 0, .8);
+  color-scheme: dark;
+}
+
+::selection { background: var(--rule-strong); color: var(--paper); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+* { scrollbar-color: var(--rule-strong) var(--paper-2); scrollbar-width: thin; }

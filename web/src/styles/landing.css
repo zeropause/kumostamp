@@ -1,0 +1,120 @@
+/* ---------- landing: the first view, before anything is saved ---------- */
+@property --p { syntax: "<number>"; initial-value: 0; inherits: true; }
+
+.landing { padding: calc(var(--row) * 2) 0 calc(var(--row) * 3); }
+.landing-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: center; }
+.landing h2 { margin: 0; font: 700 clamp(34px, 3.7vw, 56px)/.98 var(--font-form); letter-spacing: -.025em; text-wrap: balance; }
+.landing-time { font-family: var(--font-time); font-weight: 700; font-size: .82em; letter-spacing: -.04em; color: var(--red); font-variant-numeric: tabular-nums; }
+.landing-lede { margin: 20px 0 0; font-size: 19px; color: var(--ink-2); max-width: 46ch; }
+.landing-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.landing-allow { margin: 20px 0 0; padding: 10px 14px; border: 1px dashed var(--rule-strong); background: var(--print); font-size: 14px; color: var(--ink-2); max-width: 52ch; }
+.landing-allow strong { color: var(--ink); }
+
+/* The demo: one red pencil mark, carried from one site's row to another's. */
+.demo { margin: 0; background: var(--paper); border: 1px solid var(--rule-strong); box-shadow: var(--lift); }
+.demo-head { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 12px; padding: 12px 16px; background: var(--print); border-bottom: 2px solid var(--rule-strong); }
+.demo-head .cell-label { grid-column: 1 / -1; }
+.demo-title { font: 700 20px/1.1 var(--font-form); min-width: 0; }
+.demo-ep { font: 700 13px/1 var(--font-time); border: 1px solid var(--rule-strong); padding: 5px 7px; color: var(--rule-ink); }
+.demo-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 16px 16px 14px; }
+.demo-row + .demo-row { border-top: 1px solid var(--rule); }
+.demo-site { font: 500 12px/1 var(--font-time); color: var(--ink-3); }
+.demo-ruler {
+  --p: .767; /* 18:24 of 24:00 */
+  position: relative;
+  height: 30px;
+  border: 1px solid var(--rule-strong);
+  background:
+    repeating-linear-gradient(to right, var(--rule-strong) 0 1px, transparent 1px calc(100% / 24 * 5)) bottom / 100% 12px no-repeat,
+    repeating-linear-gradient(to right, var(--rule) 0 1px, transparent 1px calc(100% / 24)) bottom / 100% 7px no-repeat,
+    linear-gradient(to right, var(--red-wash) calc(var(--p) * 100%), transparent 0),
+    var(--paper);
+}
+.demo-mark { position: absolute; top: -7px; bottom: -7px; left: calc(var(--p) * 100%); width: 4px; margin-left: -2px; background: var(--red); border-radius: 2px; }
+.demo-stamp { justify-self: end; font: 700 14px/1 var(--font-time); color: var(--red-ink); font-variant-numeric: tabular-nums; }
+.demo-carry { position: relative; height: 0; }
+.demo-carry::before {
+  content: "";
+  position: absolute;
+  left: calc(16px + (100% - 32px) * .767 - 1px);
+  top: -14px;
+  height: 32px;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--red) 0 4px, transparent 4px 7px);
+}
+.demo-carry span {
+  position: absolute;
+  right: calc(16px + (100% - 32px) * .233 + 10px);
+  top: -6px;
+  font: 600 11px/1 var(--font-form);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--red-ink);
+  white-space: nowrap;
+}
+.demo-foot { display: flex; justify-content: space-between; padding: 0 16px 12px; font: 500 11px/1 var(--font-time); color: var(--ink-3); }
+
+/* The settled state above is the default (reduced motion, print). The loop plays it out. */
+@media (prefers-reduced-motion: no-preference) {
+  .demo-a .demo-ruler { animation: demo-watch 9s var(--ease-out) infinite; }
+  .demo-b .demo-ruler { animation: demo-resume 9s var(--ease-out) infinite; }
+  .demo-a .demo-stamp { animation: demo-in-a 9s linear infinite; }
+  .demo-b .demo-stamp, .demo-b .demo-mark { animation: demo-in-b 9s linear infinite; }
+  .demo-carry::before, .demo-carry span { animation: demo-carry 9s linear infinite; transform-origin: top; }
+}
+@keyframes demo-watch { 0% { --p: 0; } 38%, 100% { --p: .767; } }
+@keyframes demo-resume { 0%, 56% { --p: 0; } 66%, 100% { --p: .767; } }
+@keyframes demo-in-a { 0%, 36% { opacity: 0; } 42%, 100% { opacity: 1; } }
+@keyframes demo-in-b { 0%, 60% { opacity: 0; } 66%, 100% { opacity: 1; } }
+@keyframes demo-carry { 0%, 42% { opacity: 0; transform: scaleY(0); } 54%, 100% { opacity: 1; transform: scaleY(1); } }
+
+/* How it works: three timesheet rows, each with its own ruler. */
+.landing-steps { list-style: none; margin: calc(var(--row) * 3) 0 0; padding: 0; border-top: 2px solid var(--rule-strong); counter-reset: step; }
+.landing-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(180px, 34%);
+  gap: 20px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.landing-steps li::before { content: counter(step, decimal-leading-zero); font: 700 15px/1 var(--font-time); color: var(--rule-ink); align-self: start; padding-top: 6px; }
+.landing-steps h3 { margin: 0; font: 700 24px/1.1 var(--font-form); }
+.landing-steps p { margin: 6px 0 0; color: var(--ink-2); max-width: 58ch; }
+.ls-ruler {
+  --pos: 0;
+  position: relative;
+  height: 22px;
+  border: 1px solid var(--rule-strong);
+  background:
+    repeating-linear-gradient(to right, var(--rule-strong) 0 1px, transparent 1px calc(100% / 24 * 5)) bottom / 100% 10px no-repeat,
+    repeating-linear-gradient(to right, var(--rule) 0 1px, transparent 1px calc(100% / 24)) bottom / 100% 6px no-repeat,
+    linear-gradient(to right, var(--red-wash) calc(var(--pos) * 100%), transparent 0),
+    var(--paper);
+}
+.ls-ruler .ruler-mark { left: calc(var(--pos) * 100%); }
+.ls-ruler.is-sync { border-style: dashed; }
+
+/* Facts: one printed spec row. */
+.landing-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: calc(var(--row) * 2) 0 0; border: 1px solid var(--rule-strong); background: var(--paper); }
+.landing-facts > div { padding: 16px 18px 18px; }
+.landing-facts > div + div { border-left: 1px solid var(--rule-strong); }
+.landing-facts dt { font: 600 11px/1.1 var(--font-form); letter-spacing: .12em; text-transform: uppercase; color: var(--rule-ink); }
+.landing-facts dd { margin: 8px 0 0; font-size: 15px; color: var(--ink-2); }
+
+.landing-install { margin-top: calc(var(--row) * 2); padding: 20px 22px; border: 1px solid var(--rule-strong); background: var(--print); scroll-margin-top: 24px; }
+.landing-install h3 { margin: 0; font: 700 24px/1.1 var(--font-form); }
+.landing-install ol { margin: 12px 0 0; padding-left: 20px; color: var(--ink-2); display: grid; gap: 6px; }
+.landing-install code { font-family: var(--font-time); font-size: .9em; background: var(--paper); border: 1px solid var(--rule); padding: 1px 5px; }
+
+@media (max-width: 900px) {
+  .landing-hero { grid-template-columns: 1fr; }
+  .landing-steps li { grid-template-columns: 40px minmax(0, 1fr); }
+  .ls-ruler { grid-column: 2; }
+  .landing-facts { grid-template-columns: 1fr; }
+  .landing-facts > div + div { border-left: 0; border-top: 1px solid var(--rule-strong); }
+}
+.landing-line { display: block; }
+@media (max-width: 520px) { .landing-line { display: inline; } }
+.landing-sample { align-self: center; font-size: 15px; padding: 0 6px; }
