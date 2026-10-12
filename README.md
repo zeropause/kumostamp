@@ -184,6 +184,20 @@ Export/import di website menggunakan format ini. Saat import digabung, mark yang
 - Judul diambil dari halaman, jadi kadang perlu dikoreksi sekali per situs.
 - Jump-to-time memindahkan `currentTime` pada video; beberapa player custom bisa menimpanya. Kalau begitu, salin waktunya (tombol *Copy*) dan seek manual.
 
+## Perkiraan cakupan deteksi
+
+Ini **perkiraan kasar, bukan hasil pengukuran**: belum ada daftar situs uji atau tes otomatis, dan baru sebagian kecil situs yang pernah diperiksa. Secara keseluruhan sekitar **65–75%** situs streaming yang umum dipakai kemungkinan terbaca (judul dan nomor episode).
+
+| Kategori situs | Perkiraan | Catatan |
+|---|---|---|
+| Netflix, Prime Video, Disney+, Crunchyroll, YouTube | ~90% | Pembaca khusus per situs. Selector DOM Prime dan Disney+ bisa berubah tanpa pemberitahuan. |
+| Situs anime/film dengan judul dan episode di judul halaman, `<h1>` + label, atau URL (Otakudesu, Movy, 7movies, dan sejenisnya) | ~75% | Pola judul, label episode (`S1 · E3`, `Ep 3`, dll.), parameter URL (`?season=1&episode=3`), dan path film sudah ditangani. |
+| Layout tidak biasa: nomor episode hanya di tombol daftar, judul dimuat belakangan lewat JavaScript, atau teks di dalam gambar | ~30–40% | Belum ada pembaca untuk pola ini. |
+| Player di iframe lintas-origin dengan halaman induk tanpa info | rendah | Videonya terbaca, judulnya tidak. |
+| DRM canvas atau plugin non-HTML5 | 0% | Videonya sendiri tidak bisa dibaca. |
+
+Situs yang gagal bisa dilaporkan lewat isi *How this was detected* di popup. Angka ini akan diganti hasil ukur setelah ada test suite (lihat Rencana berikutnya).
+
 ## Logo
 
 Huruf **K** yang lengan dan kakinya adalah dua jarum jam, berayun dari batangnya di dalam setengah dial. Kakinya berwarna merah pensil: tempat kamu berhenti.
