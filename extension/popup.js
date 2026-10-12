@@ -291,6 +291,65 @@
     }
   }
 
+  /* ---------------- saved marks: every site's mark for this episode ---------------- */
+
+  let marksShown = "";
+
+  function renderMarks() {
+    const box = $("#marks");
+    const entry = state.entry;
+    const here = KS.hostOf((state.tab && state.tab.meta && state.tab.meta.url) || "");
+    const marks = KS.marksOf(entry);
+    // Nothing to choose between when the only mark is the one on this site.
+    if (!marks.length || (marks.length === 1 && marks[0].host === here)) {
+      box.hidden = true;
+      marksShown = "";
+      return;
+    }
+    const canJump = !!(state.tab && state.tab.video);
+    const sig = JSON.stringify([marks, here, canJump, state.seriesTitle]);
+    if (sig === marksShown) return; // unchanged: keep the buttons stable under the cursor
+    marksShown = sig;
+    box.hidden = false;
+    const id = state.identity;
+    $("#marks-for").textContent = state.seriesTitle ? `· ${state.seriesTitle}${entry && entry.episode != null ? " · Ep " + entry.episode : ""}` : "";
+    const list = $("#marks-list");
+    list.textContent = "";
+    for (const m of marks) {
+      const li = el(`
+        <li class="mark-row">
+          <span class="mark-main"><span class="mark-host"></span><span class="mark-meta"></span></span>
+          <span class="mark-time"></span>
+          <span class="mark-actions"></span>
+        </li>`);
+      li.querySelector(".mark-host").textContent = m.host === here ? `${m.host} (this site)` : m.host;
+      const meta = li.querySelector(".mark-meta");
+      if (m.latest) meta.append(el(`<span class="mark-tag">Latest</span>`));
+      if (m.furthest) meta.append(el(`<span class="mark-tag is-furthest">Furthest</span>`));
+      meta.append(document.createTextNode(KS.relTime(m.updatedAt)));
+      li.querySelector(".mark-time").textContent = KS.formatTime(m.time);
+      const actions = li.querySelector(".mark-actions");
+      if (canJump && id && id.series) {
+        const jump = el(`<button class="btn btn-quiet" type="button">Jump</button>`);
+        jump.title = `Go to ${KS.formatTime(m.time)} in this tab`;
+        jump.addEventListener("click", async () => {
+          jump.disabled = true;
+          const r = await send({ type: "jumpTo", tabId, time: m.time });
+          if (r && r.error) jump.title = r.error;
+          await refresh(true);
+        });
+        actions.append(jump);
+      }
+      if (m.host !== here && m.url) {
+        const open = el(`<button class="btn btn-quiet" type="button">Open</button>`);
+        open.title = `Open this episode on ${m.host}`;
+        open.addEventListener("click", () => chrome.tabs.create({ url: m.url }));
+        actions.append(open);
+      }
+      list.append(li);
+    }
+  }
+
   /* ---------------- settings ---------------- */
 
   function renderSettings() {
@@ -329,6 +388,7 @@
       renderInfo();
     }
     renderRecent();
+    renderMarks();
   }
 
   /* ---------------- connected accounts ---------------- */
@@ -418,6 +478,7 @@
 
   renderNow();
   renderRecent();
+  renderMarks();
   renderSettings();
   loadAccounts();
   refreshTimer = setInterval(refresh, 2000);

@@ -113,7 +113,7 @@ async function resumeFor(tab, db) {
   if (!id) return null;
   const hit = KS.findEntry(db || (await readDb()), id.series, id.episode);
   if (!hit || !hit.episode || hit.episode.finished || (hit.episode.time || 0) < 30) return null;
-  return { title: hit.series.title, key: hit.series.key, episode: hit.episode.episode, time: hit.episode.time, duration: hit.episode.duration, host: hit.episode.lastHost };
+  return { title: hit.series.title, key: hit.series.key, episode: hit.episode.episode, time: hit.episode.time, duration: hit.episode.duration, host: hit.episode.lastHost, alt: KS.altMark(hit.episode) };
 }
 
 /* ---------- cross-site sync ---------- */
@@ -125,7 +125,7 @@ async function markFor(tab) {
   const hit = KS.findEntry(await readDb(), id.series, id.episode);
   const ep = hit && hit.episode;
   if (!ep || ep.finished || (ep.time || 0) < 30) return null;
-  return { time: ep.time, host: ep.lastHost, title: hit.series.title, episode: ep.episode, duration: ep.duration };
+  return { time: ep.time, host: ep.lastHost, title: hit.series.title, episode: ep.episode, duration: ep.duration, alt: KS.altMark(ep) };
 }
 
 function syncKey(tab) {
@@ -553,6 +553,19 @@ async function handle(msg, sender) {
         await seekTab(tabId, tab.videoFrameId, mark.time);
         tab.saveStatus = { saved: false, reason: `Synced to ${KS.formatTime(mark.time)}${mark.host ? " from " + mark.host : ""}.`, at: Date.now() };
         return { ok: true, time: mark.time, host: mark.host };
+      });
+    }
+
+    case "jumpTo": {
+      // "Saved marks": go to a specific site's mark. It becomes the newest mark once playback saves from there.
+      return withTab(tabId, async (tab) => {
+        if (!tab.video) return { error: "No video found on this page yet." };
+        const t = Math.max(0, Number(msg.time) || 0);
+        tab.sync = { key: syncKey(tab), state: "declined", from: tab.video.time || 0 };
+        tab.lastSave = 0;
+        await seekTab(tabId, tab.videoFrameId, t, true);
+        tab.saveStatus = { saved: false, reason: `Jumped to ${KS.formatTime(t)}.`, at: Date.now() };
+        return { ok: true, time: t };
       });
     }
 

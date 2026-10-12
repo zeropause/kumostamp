@@ -448,9 +448,35 @@
     return { mediaId: Number(meta.id), progress: n, status: finishing ? "COMPLETED" : "CURRENT" };
   }
 
+  /**
+   * Every site's saved mark for one episode, furthest first.
+   * `latest` is the site you last watched on (what sync follows); `furthest` is the biggest time.
+   */
+  function marksOf(episode) {
+    const rows = Object.entries((episode && episode.providers) || {})
+      .map(([host, p]) => ({ host, time: Math.max(0, Math.floor((p && p.time) || 0)), updatedAt: (p && p.updatedAt) || 0, url: (p && p.url) || "" }))
+      .filter((m) => m.time > 0 || m.url);
+    if (!rows.length) return [];
+    const newest = rows.reduce((a, b) => (b.updatedAt > a.updatedAt ? b : a));
+    const latestHost = episode.lastHost && rows.some((r) => r.host === episode.lastHost) && newest.updatedAt <= ((episode.providers[episode.lastHost] || {}).updatedAt || 0) ? episode.lastHost : newest.host;
+    rows.sort((a, b) => b.time - a.time || b.updatedAt - a.updatedAt);
+    const top = rows[0].time;
+    return rows.map((r) => Object.assign(r, { latest: r.host === latestHost, furthest: r.time === top && rows.some((o) => o.time < top) }));
+  }
+
+  /** A mark on another site that is well ahead of the one sync follows (the latest): worth offering. */
+  const ALT_GAP_SEC = 60;
+  function altMark(episode) {
+    const marks = marksOf(episode);
+    const latest = marks.find((m) => m.latest);
+    if (!latest) return null;
+    const ahead = marks.filter((m) => !m.latest && m.time >= latest.time + ALT_GAP_SEC);
+    return ahead.length ? { host: ahead[0].host, time: ahead[0].time } : null;
+  }
+
   const api = {
     VERSION, FILM, emptyDb, seriesKey, epKey, resolveKey, formatTime, parseTime, hostOf,
-    parseMedia, parseEpisodeLabel, withSeason, isGenericTitle, cleanSeries, applyOp, findEntry, recent, relTime, anilistPlan,
+    parseMedia, parseEpisodeLabel, withSeason, isGenericTitle, cleanSeries, applyOp, findEntry, recent, relTime, anilistPlan, marksOf, altMark,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

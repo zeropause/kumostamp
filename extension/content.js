@@ -269,6 +269,10 @@
         button.go { background: #d23a2c; color: #fff; }
         button.go:hover { background: #b52c20; }
         button.x { color: #48514c; border-top: 1px solid #3d8fa8; justify-content: center; }
+        .alt { margin-top: 9px; padding-top: 7px; border-top: 1px dashed #a9cfd9; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 12px; color: #48514c; }
+        button.use { all: unset; cursor: pointer; font: 600 13px/1.2 ${condensed}; color: #23677d; text-decoration: underline; text-underline-offset: 2px; }
+        button.use:hover { color: #1b1f1d; }
+        button.use:focus-visible { outline: 2px solid #2d5fb8; outline-offset: 2px; }
         button.x:hover { background: #e2e8df; }
         button:focus-visible { outline: 2px solid #2d5fb8; outline-offset: -2px; }
       </style>
@@ -277,6 +281,7 @@
           <div class="title"><svg class="mark" viewBox="-2 0 64 64" aria-hidden="true"><rect x="6" y="6" width="13" height="52" fill="#1b1f1d"/><line x1="19" y1="32" x2="39.7" y2="14.67" stroke="#1b1f1d" stroke-width="10"/><line x1="19" y1="32" x2="39.7" y2="49.33" stroke="#d23a2c" stroke-width="10"/><path d="M42.42 5.99A35 35 0 0 1 42.42 58.01" fill="none" stroke="#1b1f1d" stroke-width="4"/><line x1="47" y1="32" x2="52" y2="32" stroke="#1b1f1d" stroke-width="3"/></svg><span class="name"></span><span class="ep">${ep.toUpperCase()}</span></div>
           <div class="where">${r.synced ? "Synced to" : "Your mark is at"} <span class="time">${KS.formatTime(r.time)}</span>${elsewhere ? ` from ${escapeHtml(r.host)}` : ""}</div>
           <div class="ruler" aria-hidden="true"></div>
+          ${r.alt ? `<div class="alt"><span>Also <span class="time">${KS.formatTime(r.alt.time)}</span> on <span class="alt-host"></span></span><button class="use" type="button">Use ${KS.formatTime(r.alt.time)} instead</button></div>` : ""}
         </div>
         <div class="actions">
           <button class="go" type="button">${r.synced ? `Undo · back to ${KS.formatTime(r.from || 0)}` : `Sync to ${KS.formatTime(r.time)}`}</button>
@@ -289,6 +294,13 @@
       hideChip();
     });
     root.querySelector(".x").addEventListener("click", hideChip);
+    if (r.alt) {
+      root.querySelector(".alt-host").textContent = r.alt.host;
+      root.querySelector(".use").addEventListener("click", () => {
+        send({ type: "jumpTo", time: r.alt.time });
+        hideChip();
+      });
+    }
     document.documentElement.appendChild(chipHost);
     stackCards();
     setTimeout(hideChip, r.synced ? 12000 : 45000);

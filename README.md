@@ -97,6 +97,12 @@ Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman nav
 - Resume mendarat tepat di detik yang tersimpan (tanpa mundur beberapa detik), dan detik disimpan dengan pembulatan ke bawah seperti yang ditampilkan player.
 - Di Netflix, seek dilakukan lewat API player Netflix (`main-world.js`), karena mengubah waktu `<video>` secara langsung membuat Netflix error (M7375).
 
+**Saved marks: mark dari beberapa situs.** Kumostamp menyimpan satu mark per situs untuk tiap episode. Sync mengikuti mark **terbaru** (situs yang terakhir kamu tonton), bukan yang terjauh. Kalau situs A terakhir ditonton di 06:37 dan situs B pernah sampai 14:56, sync membawa kamu ke 06:37. Untuk memilih:
+- Popup menampilkan bagian *Saved marks* untuk episode yang sedang dibuka: semua situs, waktunya, kapan terakhir, dan label **Latest** / **Furthest**. **Jump** langsung memindahkan video di tab ini ke waktu itu (tepat di detiknya), **Open** membuka episode di situs tersebut.
+- Kartu sync/resume di halaman ikut menawarkan mark lain yang lebih jauh (selisih lebih dari 1 menit): *Also 14:56 on B · Use 14:56 instead*.
+- Setelah kamu Jump dan memutar dari situ, posisi itu menjadi mark terbaru, jadi situs lain ikut sync ke sana.
+- Mark situs lain tidak dihapus oleh mark baru, sehingga bisa dipilih kapan saja.
+
 **Sinkron ke website.** `bridge.js` hanya aktif di `localhost`, `127.0.0.1`, dan `file://`, dan hanya pada halaman yang punya atribut `<html data-kumostamp-app>`. Bridge mengirim database ke halaman dan meneruskan perubahan dari website ke background worker, yang menjadi satu-satunya penulis data. Tanpa extension, website tetap jalan dan menyimpan ke `localStorage` (mark itu dipindahkan ke extension setelah extension terpasang).
 
 **Sinkron ke AniList.** Opsional, dihubungkan lewat popup (*Connected accounts*). Begitu sebuah episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di list AniList kamu (progres = episode yang sedang diputar). Selesai menonton tidak mengirim apa pun; status *Completed* di episode terakhir kamu set sendiri di AniList. Setiap pembaruan dan menampilkan kartu kecil *AniList updated · Dandadan 3/12* dengan tombol **Undo**.

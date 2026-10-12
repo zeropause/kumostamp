@@ -142,6 +142,21 @@ svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width:
 .empty h2 { margin: 0 0 4px; font: 700 20px/1.1 var(--font-form); }
 .empty p { margin: 0; color: var(--ink-2); font-size: 13px; max-width: 32ch; }
 
+/* ---------- saved marks ---------- */
+.marks { padding: 12px 12px 4px; border-bottom: 2px solid var(--rule-strong); }
+.marks[hidden] { display: none; }
+.marks-for { font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-3); }
+.marks-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule-strong); }
+.mark-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--rule); }
+.mark-main { min-width: 0; display: grid; gap: 2px; }
+.mark-host { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mark-meta { font-size: 11px; color: var(--ink-3); }
+.mark-tag { display: inline-block; margin-right: 4px; padding: 1px 4px; border: 1px solid var(--rule-strong); font: 700 10px/1.3 var(--font-form); letter-spacing: .06em; text-transform: uppercase; color: var(--rule-ink); }
+.mark-tag.is-furthest { border-color: var(--red); color: var(--red-ink); }
+.mark-time { font: 700 16px/1 var(--font-time); font-variant-numeric: tabular-nums; }
+.mark-actions { display: flex; gap: 4px; }
+.mark-actions .btn { min-height: 28px; padding: 0 10px; font-size: 14px; }
+
 /* ---------- recent ---------- */
 .recent { padding: 12px 12px 6px; }
 .recent-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule-strong); }
