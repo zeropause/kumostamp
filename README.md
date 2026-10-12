@@ -67,6 +67,7 @@ Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman nav
 - Jawaban yang yakin tidak lagi "menempel" selama URL sama. Jawaban itu hanya dipakai kalau judul dan heading halaman masih sama seperti saat dibaca.
 - Posisi video dari episode sebelumnya dibuang saat halaman menyebut episode lain, jadi tidak ikut tersimpan atau memicu sync ke episode yang salah.
 - Koreksi manual di popup gugur begitu halaman dengan yakin menyebut episode lain.
+- **Data statis yang basi.** Banyak situs hanya menulis `og:title` dan JSON-LD saat halaman pertama dimuat, jadi keduanya tetap menyebut episode pertama setelah pindah episode (contoh: reanime.to). Episode yang disebut URL (`?ep=3`) dan `<title>` yang hidup menang atas keduanya.
 
 **Kalau deteksi gagal**, buka popup lalu klik *How this was detected*. Bagian itu menampilkan hasil setiap pembaca, misalnya `page-world: netflix: metadata not readable` atau `page-title: nothing`. Kirim isinya kalau ada situs yang belum terbaca.
 

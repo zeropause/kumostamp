@@ -123,6 +123,39 @@
     try { return site.read(); } catch (_) { return null; }
   }
 
+  /* ---------- live vs. stale page data ---------- */
+
+  // Sites that swap episodes in place update the URL and <title>, but og:title and JSON-LD
+  // are written once, when the page first loaded, and keep naming the first episode.
+  // The episode the live signals (URL query, document title) agree on wins over them.
+  function urlEpisode() {
+    for (const [k, v] of new URLSearchParams(location.search)) {
+      if (/^\d{1,4}$/.test(v) && EP_PARAM.test(k)) return Number(v);
+    }
+    return null;
+  }
+
+  function liveEpisode() {
+    const fromUrl = urlEpisode();
+    if (fromUrl !== null) return fromUrl;
+    const t = KS.parseMedia({ title: document.title, url: location.href });
+    return t.episode != null ? t.episode : null;
+  }
+
+  const isStale = (episode) => {
+    const live = liveEpisode();
+    return live !== null && episode != null && live !== episode;
+  };
+
+  /** og:title / twitter:title, unless it names a different episode than the live page. */
+  function freshOgTitle() {
+    const og = document.querySelector('meta[property="og:title"], meta[name="twitter:title"]');
+    const text = og ? og.getAttribute("content") || "" : "";
+    if (!text) return "";
+    const named = KS.parseMedia({ title: text, url: location.href });
+    return isStale(named.episode) ? "" : text;
+  }
+
   /* ---------- 3. JSON-LD ---------- */
 
   function fromJsonLd() {
@@ -136,7 +169,7 @@
           const series = (it.partOfSeries && it.partOfSeries.name) || "";
           const season = it.partOfSeason && Number(it.partOfSeason.seasonNumber);
           const ep = Number(it.episodeNumber);
-          if (series && ep) return result(series, { season: season || null, episode: ep }, "json-ld", "high");
+          if (series && ep && !isStale(ep)) return result(series, { season: season || null, episode: ep }, "json-ld", "high");
         }
         if (type.includes("Movie") && it.name) return result(it.name, null, "json-ld", "high", true);
       }
@@ -193,8 +226,7 @@
     }
     if (!episode || episode > 3000) return null;
     const h1 = document.querySelector("h1");
-    const og = document.querySelector('meta[property="og:title"]');
-    const base = KS.parseMedia({ title: document.title, ogTitle: og ? og.getAttribute("content") : "", h1: h1 ? h1.textContent.trim().slice(0, 200) : "", url: location.href });
+    const base = KS.parseMedia({ title: document.title, ogTitle: freshOgTitle(), h1: h1 ? h1.textContent.trim().slice(0, 200) : "", url: location.href });
     const series = (h1 && h1.textContent.trim()) || base.series;
     if (!series || base.episode != null) return null; // the page text already says (or contradicts) it
     return result(series, { season, episode }, "url-path", "medium");
@@ -253,14 +285,16 @@
   /* ---------- 5. page text ---------- */
 
   function fromPage() {
-    const og = document.querySelector('meta[property="og:title"], meta[name="twitter:title"]');
     const h1 = document.querySelector("h1");
     const parsed = KS.parseMedia({
       title: document.title,
-      ogTitle: og ? og.getAttribute("content") : "",
+      ogTitle: freshOgTitle(),
       h1: h1 ? h1.textContent.trim().slice(0, 200) : "",
       url: location.href,
     });
+    // The URL names the episode and the page text disagrees: the text is stale, so let the URL reader answer.
+    const ue = urlEpisode();
+    if (ue !== null && parsed.episode != null && parsed.episode !== ue) return null;
     return Object.assign(parsed, { source: "page-title", kind: parsed.episode != null ? "episode" : parsed.film ? "film" : "unknown" });
   }
 

@@ -221,6 +221,7 @@
     "home", "beranda", "browse", "watch", "player", "video", "videos", "movies", "movie", "film", "series", "tv shows",
     "my list", "daftar saya", "search", "cari", "netflix", "prime video", "disney+", "disney+ hotstar", "hbo max", "max",
     "crunchyroll", "youtube", "vidio", "viu", "iqiyi", "bilibili", "loading", "untitled", "anime", "streaming", "nonton",
+    "episodes", "episode", "episode list", "comments", "related", "recommended", "about anime",
   ]);
   function isGenericTitle(s) {
     const t = String(s || "").trim().toLowerCase();
