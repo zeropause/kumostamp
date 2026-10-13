@@ -466,3 +466,17 @@ tr.is-unassigned { background: color-mix(in srgb, var(--print) 45%, transparent)
 .wordmark-link { display: inline-flex; align-items: center; gap: 10px; }
 .wordmark-link .logo-mark { flex: none; width: 44px; height: 44px; color: var(--ink); }
 @media (max-width: 720px) { .wordmark-link .logo-mark { width: 34px; height: 34px; } }
+
+/* ---------- account ---------- */
+.account-chip { gap: 8px; max-width: 200px; }
+.account-chip img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.account-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-page { padding-top: calc(var(--row) * 2); }
+.account-card { max-width: 640px; padding: 24px 26px 28px; border: 1px solid var(--rule-strong); background: var(--print); }
+.account-card h2 { margin: 10px 0 0; font: 700 clamp(28px, 3vw, 40px)/1 var(--font-form); letter-spacing: -.02em; text-wrap: balance; overflow-wrap: anywhere; }
+.account-lede { margin: 14px 0 0; font-size: 17px; color: var(--ink-2); max-width: 54ch; }
+.account-who { display: flex; align-items: center; gap: 14px; margin-top: 16px; color: var(--ink-2); }
+.account-who img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--rule-strong); }
+.account-who p { margin: 0; }
+.account-error { margin: 16px 0 0; padding: 10px 14px; border: 1px solid var(--red); background: var(--red-wash); color: var(--red-ink); font-size: 15px; }
+.account-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 24px; }

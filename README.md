@@ -9,9 +9,9 @@ Ada dua bagian:
 | Bagian | Folder | Fungsi |
 |---|---|---|
 | Extension (Chrome/Edge, Manifest V3) | `extension/` | Mendeteksi video yang diputar (termasuk di dalam iframe), menebak judul dan episode, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
-| Website (React + Vite + TypeScript SPA) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
+| Website (React + Vite + TypeScript SPA, API Hono di `web/worker/`) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
 
-Tidak ada backend. Semua data disimpan lokal di browser.
+Website punya backend kecil (Hono di Cloudflare Workers + D1) untuk login dengan MyAnimeList. Mark tetap disimpan lokal di browser dan extension; sinkron ke akun menyusul.
 
 ## Menjalankan
 
@@ -23,11 +23,26 @@ npm install
 npm run dev
 ```
 
-Lalu buka http://localhost:5173. Deploy ke Cloudflare Pages: `npm run deploy` (branch produksi proyek ini bernama `production`). Build saja: `npm run build` (hasil di `web/dist/`, preview dengan `npm run preview`). Port harus tetap 5173 di localhost agar extension bisa terhubung.
+Lalu buka http://localhost:5173. Port harus tetap 5173 di localhost agar extension bisa terhubung. Dev server yang sama juga menjalankan API (`/api/*`) dan database D1 lokal.
+
+**Backend (sekali saja):**
+1. `npm run db:migrate` membuat tabel di D1 lokal.
+2. Salin `.dev.vars.example` ke `.dev.vars`, lalu isi `TOKEN_KEY` (perintah pembuatnya ada di file itu).
+3. Untuk login MyAnimeList: buat client di https://myanimelist.net/apiconfig (App Type: **web**), daftarkan redirect URL `http://localhost:5173/api/auth/mal/callback`, lalu isi `MAL_CLIENT_ID` dan `MAL_CLIENT_SECRET` di `.dev.vars`.
+
+**Deploy (Cloudflare Workers):**
+1. `npx wrangler login`
+2. `npx wrangler d1 create kumostamp`, lalu salin `database_id`-nya ke `wrangler.jsonc`.
+3. `npm run db:migrate:remote`
+4. `npx wrangler secret put MAL_CLIENT_ID` (ulangi untuk `MAL_CLIENT_SECRET` dan `TOKEN_KEY`). Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
+5. `npm run deploy`
+
+Build saja: `npm run build`, lalu `npm run preview` (menjalankan Worker hasil build).
 
 Halaman:
 - `/`: library, berisi band *Continue*, filter (`?show=all&sort=az&q=…` tersimpan di URL), dan satu sheet per series.
 - `/series/:key`: satu series dengan semua episode. Kalau sudah di-link ke katalog, daftar episode (judul, tanggal tayang, durasi) diambil otomatis dari AniList / TVmaze / IMDb. Mark kamu ditempel di atasnya, dan episode yang belum ditonton punya tombol *Mark*.
+- `/login`: masuk dengan MyAnimeList, atau lihat akun yang sedang masuk dan keluar.
 
 ### 2. Extension
 

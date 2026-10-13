@@ -6,6 +6,7 @@ import { details, RETIRED } from "./lib/catalog";
 import { needsInfo, runAutoLink } from "./lib/autolink";
 import { getDb, op, useStore } from "./lib/store";
 import { Library } from "./routes/Library";
+import { Login } from "./routes/Login";
 import { SeriesPage } from "./routes/SeriesPage";
 
 const STALE_MS = 3 * 24 * 3600 * 1000;
@@ -70,6 +71,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Library />} />
         <Route path="/series/:key" element={<SeriesPage />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<Library />} />
       </Routes>
     </>
