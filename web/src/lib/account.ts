@@ -43,12 +43,17 @@ export async function signOut() {
 /** Full-page navigation: the server redirects on to MyAnimeList. */
 export const SIGN_IN_URL = "/api/auth/mal/login";
 
+export function getAccount(): AccountState {
+  return state;
+}
+
+export function subscribeAccount(fn: () => void) {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
 export function useAccount(): AccountState {
-  return useSyncExternalStore(
-    (fn) => {
-      listeners.add(fn);
-      return () => listeners.delete(fn);
-    },
-    () => state,
-  );
+  return useSyncExternalStore(subscribeAccount, getAccount);
 }

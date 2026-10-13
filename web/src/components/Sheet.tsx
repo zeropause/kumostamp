@@ -210,7 +210,7 @@ export function SheetTools({ series, onDeleted }: { series: Series; onDeleted?: 
     onDeleted?.();
     toast(`Deleted ${series.title}.`, {
       label: "Undo",
-      run: () => run({ type: "import", db: { series: { [series.key]: snapshot }, aliases: {} } }),
+      run: () => run({ type: "import", restore: true, db: { series: { [series.key]: snapshot }, aliases: {} } }),
     });
   }
 
@@ -261,7 +261,7 @@ export function EpisodeRow({ series, epKey, ep, catalogTitle, defaultDuration }:
     toast(`Removed ${name} of ${series.title}.`, {
       label: "Undo",
       run: () =>
-        run({ type: "import", db: { series: { [series.key]: { key: series.key, title: series.title, meta: series.meta, episodes: { [epKey]: snapshot } } }, aliases: {} } }),
+        run({ type: "import", db: { series: { [series.key]: { key: series.key, title: series.title, meta: series.meta, episodes: { [epKey]: snapshot } } }, aliases: {} }, restore: true }),
     });
   }
 

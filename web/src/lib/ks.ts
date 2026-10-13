@@ -52,12 +52,20 @@ export interface Series {
   episodes: Record<string, Episode>;
   createdAt?: number;
   updatedAt?: number;
+  titledAt?: number; // when the title was last changed by hand, so a rename wins a sync
+}
+
+/** Deletions with their time: series key -> ts, and series key -> episode key -> ts. */
+export interface Removed {
+  series: Record<string, number>;
+  episodes: Record<string, Record<string, number>>;
 }
 
 export interface Db {
   version: number;
   series: Record<string, Series>;
   aliases: Record<string, string>;
+  removed?: Removed;
   updatedAt: number;
   sample?: boolean;
 }
@@ -70,7 +78,7 @@ export type Op =
   | { type: "deleteSeries"; key: string }
   | { type: "deleteEpisode"; key: string; episode: number | null }
   | { type: "moveEpisode"; key: string; from: number | null; to: number | null }
-  | { type: "import"; db: Partial<Db> & { series: Record<string, Series> } }
+  | { type: "import"; db: Partial<Db> & { series: Record<string, Series> }; restore?: boolean }
   | { type: "replace"; db: Db };
 
 export interface RecentRow {
@@ -89,6 +97,8 @@ interface KSApi {
   parseTime(input: string): number | null;
   hostOf(url: string): string;
   applyOp(db: Db, op: Op, now?: number): Db;
+  mergeDb(db: Db, incoming: Partial<Db> & { series: Record<string, Series> }): Db;
+  dbSignature(db: Partial<Db>): string;
   recent(db: Db, limit?: number): RecentRow[];
   relTime(ts: number | undefined, now?: number): string;
 }

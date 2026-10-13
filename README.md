@@ -11,7 +11,7 @@ Ada dua bagian:
 | Extension (Chrome/Edge, Manifest V3) | `extension/` | Mendeteksi video yang diputar (termasuk di dalam iframe), menebak judul dan episode, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
 | Website (React + Vite + TypeScript SPA, API Hono di `web/worker/`) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
 
-Website punya backend kecil (Hono di Cloudflare Workers + D1) untuk login dengan MyAnimeList. Mark tetap disimpan lokal di browser dan extension; sinkron ke akun menyusul.
+Website punya backend kecil (Hono di Cloudflare Workers + D1) untuk login dengan MyAnimeList dan sinkron library ke akun. Mark tetap disimpan lokal di browser dan extension, jadi semuanya jalan juga tanpa login.
 
 ## Menjalankan
 
@@ -119,6 +119,13 @@ Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman nav
 - Mark situs lain tidak dihapus oleh mark baru, sehingga bisa dipilih kapan saja.
 
 **Sinkron ke website.** `bridge.js` hanya aktif di `localhost`, `127.0.0.1`, dan `file://`, dan hanya pada halaman yang punya atribut `<html data-kumostamp-app>`. Bridge mengirim database ke halaman dan meneruskan perubahan dari website ke background worker, yang menjadi satu-satunya penulis data. Tanpa extension, website tetap jalan dan menyimpan ke `localStorage` (mark itu dipindahkan ke extension setelah extension terpasang).
+
+**Sinkron ke akun.** Setelah login dengan MyAnimeList (halaman `/login`), website menggabungkan library di browser ini (extension atau `localStorage`) dengan salinan di server, lalu menyimpan hasilnya ke keduanya. Browser lain yang login ke akun yang sama mendapat mark yang sama tanpa export/import file.
+- **Penggabungannya sama seperti import:** mark terbaru menang per episode, mark per situs digabung, dan info katalog yang lebih baru serta judul yang diganti manual ikut menang.
+- **Hapus tetap terhapus.** Penghapusan series atau episode dicatat beserta waktunya (`removed` di database), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali. *Undo* hapus juga ikut tersinkron.
+- **Kapan sinkron:** sekitar 2 detik setelah ada perubahan, saat tab kembali aktif, dan setiap menit selama tab terbuka. Status ada di header (*Synced with your account*).
+- **Untuk sekarang website yang menjembatani**, jadi mark dari extension baru naik ke server saat website dibuka. Extension yang sinkron sendiri menyusul.
+- Setelah update ini, **reload extension** di `chrome://extensions` supaya catatan hapus dan aturan penggabungan yang baru juga dipakai di extension.
 
 **Sinkron ke AniList.** Opsional, dihubungkan lewat popup (*Connected accounts*). Begitu sebuah episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di list AniList kamu (progres = episode yang sedang diputar). Selesai menonton tidak mengirim apa pun; status *Completed* di episode terakhir kamu set sendiri di AniList. Setiap pembaruan dan menampilkan kartu kecil *AniList updated · Dandadan 3/12* dengan tombol **Undo**.
 - **Hanya satu arah dan hanya naik.** Progres yang sudah di AniList tidak pernah diturunkan, dan entri yang sedang *Rewatching* tidak disentuh. Kumostamp tidak pernah menandai *Completed*.

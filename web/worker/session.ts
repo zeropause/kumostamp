@@ -13,12 +13,15 @@ export interface User {
   picture: string | null;
 }
 
+/** Any route's context with our bindings, whatever variables that route adds. */
 type Ctx = Context<{ Bindings: Env }>;
+const asCtx = <E extends { Bindings: Env }>(c: Context<E>) => c as unknown as Ctx;
 
 /** Secure only over https, so the session also works on http://localhost. */
-export const secureCookies = (c: Ctx) => new URL(c.req.url).protocol === "https:";
+export const secureCookies = <E extends { Bindings: Env }>(c: Context<E>) => new URL(c.req.url).protocol === "https:";
 
-export async function startSession(c: Ctx, userId: string) {
+export async function startSession<E extends { Bindings: Env }>(ctx: Context<E>, userId: string) {
+  const c = asCtx(ctx);
   const value = randomToken();
   const now = Date.now();
   await c.env.DB.prepare("INSERT INTO sessions (id_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
@@ -27,7 +30,8 @@ export async function startSession(c: Ctx, userId: string) {
   setCookie(c, COOKIE, value, { path: "/", httpOnly: true, secure: secureCookies(c), sameSite: "Lax", maxAge: MAX_AGE });
 }
 
-export async function currentUser(c: Ctx): Promise<User | null> {
+export async function currentUser<E extends { Bindings: Env }>(ctx: Context<E>): Promise<User | null> {
+  const c = asCtx(ctx);
   const value = getCookie(c, COOKIE);
   if (!value) return null;
   const row = await c.env.DB.prepare(
@@ -39,7 +43,8 @@ export async function currentUser(c: Ctx): Promise<User | null> {
   return row ? { id: row.id, malUserId: row.mal_user_id, name: row.mal_name, picture: row.mal_picture } : null;
 }
 
-export async function endSession(c: Ctx) {
+export async function endSession<E extends { Bindings: Env }>(ctx: Context<E>) {
+  const c = asCtx(ctx);
   const value = getCookie(c, COOKIE);
   if (value) await c.env.DB.prepare("DELETE FROM sessions WHERE id_hash = ?").bind(await sha256(value)).run();
   deleteCookie(c, COOKIE, { path: "/", secure: secureCookies(c) });

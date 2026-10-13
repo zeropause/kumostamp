@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "../lib/account";
 import { useStore, op } from "../lib/store";
+import { syncNow, useSync } from "../lib/sync";
 import type { Db } from "../lib/ks";
 import { Icon } from "./Icon";
 import { LogoMark } from "./Logo";
@@ -12,6 +13,7 @@ export function TitleBlock() {
   const { db, mode, extVersion } = useStore();
   const { openAdd, closeAdd, addRequest, toast } = useUi();
   const account = useAccount();
+  const sync = useSync();
   const fileRef = useRef<HTMLInputElement>(null);
   const all = Object.values(db.series || {});
   const marks = all.reduce((n, s) => n + Object.keys(s.episodes || {}).length, 0);
@@ -73,6 +75,20 @@ export function TitleBlock() {
         >
           {linkText}
         </span>
+        {sync.status !== "off" && (
+          <span className="sync-state" data-state={sync.status} role="status">
+            {sync.status === "syncing" ? "Syncing with your account…"
+            : sync.status === "synced" ? "Synced with your account"
+            : (
+              <>
+                {sync.message}{" "}
+                <button className="linklike" type="button" onClick={() => syncNow()}>
+                  Retry
+                </button>
+              </>
+            )}
+          </span>
+        )}
       </div>
       <div className="tb-cell tb-actions">
         <button className="btn btn-ink" type="button" aria-expanded={!!addRequest} aria-controls="add-panel" onClick={() => (addRequest ? closeAdd() : openAdd({}))}>

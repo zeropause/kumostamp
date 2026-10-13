@@ -18,7 +18,7 @@ export function Login() {
             <h2 id="account-title">Signed in as {account.user.name}</h2>
             <div className="account-who">
               {account.user.picture && <img src={account.user.picture} alt="" width={56} height={56} />}
-              <p>Through MyAnimeList. Kumostamp only reads your profile name and picture.</p>
+              <p>Through MyAnimeList. Kumostamp reads only your profile name and picture.</p>
             </div>
             <div className="account-actions">
               <Link className="btn btn-ink" to="/">Back to your library</Link>
@@ -39,8 +39,8 @@ export function Login() {
           <>
             <h2 id="account-title">Sign in to keep your marks in one place</h2>
             <p className="account-lede">
-              Use your MyAnimeList account. Your marks stay in this browser and the extension as they do now. Syncing them to your account
-              (so another browser picks them up, without exporting a file) comes next.
+              Use your MyAnimeList account. Your marks are saved to it and merged with every browser you sign in on, so you never need to
+              export a file. The extension keeps working without signing in.
             </p>
             {error && (
               <p className="account-error" role="alert">

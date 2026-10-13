@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import auth from "./auth-mal";
+import library from "./library";
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
 
@@ -13,6 +14,7 @@ const app = new Hono<{ Bindings: Env }>().basePath("/api");
 app.use(csrf());
 
 app.route("/auth", auth);
+app.route("/library", library);
 
 app.get("/health", async (c) => {
   const row = await c.env.DB.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'users'").first<{ n: number }>();
