@@ -13,9 +13,7 @@
     {
       "binding": "DB",
       "database_name": "kumostamp",
-      // Local dev works with this placeholder. Before deploying, run
-      // `npx wrangler d1 create kumostamp` and paste the id it prints here.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "60487194-af3f-4f90-a15e-d28b1a0516d2",
       "migrations_dir": "migrations"
     }
   ],
