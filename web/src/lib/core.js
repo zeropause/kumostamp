@@ -10,7 +10,7 @@
   const FILM = "film";
 
   function emptyDb() {
-    return { version: VERSION, series: {}, aliases: {}, updatedAt: 0 };
+    return { version: VERSION, series: {}, aliases: {}, removed: { series: {}, episodes: {} }, updatedAt: 0 };
   }
 
   /**
@@ -266,6 +266,7 @@
     now = now || Date.now();
     db = db && db.series ? db : emptyDb();
     db.aliases = db.aliases || {};
+    const removed = removedOf(db);
 
     switch (op.type) {
       case "progress": {
@@ -310,7 +311,10 @@
       case "upsertSeries": {
         const key = op.key || resolveKey(db, op.title);
         const series = db.series[key] || { key, title: op.title, meta: null, episodes: {}, createdAt: now };
-        if (op.title) series.title = op.title;
+        if (op.title && op.title !== series.title) {
+          series.title = op.title;
+          series.titledAt = now;
+        }
         if (op.meta) series.meta = Object.assign({}, series.meta || {}, op.meta, { fetchedAt: now });
         db.series[key] = series;
         touch(db, series, now);
@@ -333,6 +337,8 @@
       }
       case "deleteSeries":
         delete db.series[op.key];
+        delete removed.episodes[op.key];
+        removed.series[op.key] = now;
         for (const [a, t] of Object.entries(db.aliases)) if (t === op.key) delete db.aliases[a];
         db.updatedAt = now;
         break;
@@ -353,23 +359,24 @@
           dst.providers = Object.assign({}, src.providers, dst.providers);
         }
         delete series.episodes[from];
+        markRemoved(removed, op.key, from, now);
         touch(db, series, now);
         break;
       }
       case "deleteEpisode":
         if (db.series[op.key]) {
           delete db.series[op.key].episodes[epKey(op.episode)];
+          markRemoved(removed, op.key, epKey(op.episode), now);
           touch(db, db.series[op.key], now);
         }
         break;
       case "import": {
+        // Another copy of the library (sync, a JSON file, or an undo snapshot), merged in.
         const incoming = op.db && op.db.series ? op.db : null;
         if (!incoming) break;
-        Object.assign(db.aliases, incoming.aliases || {});
-        for (const [key, s] of Object.entries(incoming.series)) {
-          if (!db.series[key]) db.series[key] = s;
-          else mergeInto(db.series[key], s);
-        }
+        // Undo: what comes back must outlive the deletion it reverses, here and on every synced copy.
+        const series = op.restore ? restoreAfter(removed, incoming.series, now) : incoming.series;
+        mergeDb(db, Object.assign({}, incoming, { series }));
         db.updatedAt = now;
         break;
       }
@@ -379,19 +386,118 @@
     return db;
   }
 
-  function mergeInto(target, source) {
+  /** Per site, the newer mark wins. */
+  function mergeProviders(a, b) {
+    const out = Object.assign({}, a);
+    for (const [host, p] of Object.entries(b || {})) {
+      if (!out[host] || ((p && p.updatedAt) || 0) > ((out[host] && out[host].updatedAt) || 0)) out[host] = p;
+    }
+    return out;
+  }
+
+  /**
+   * Fold `source` into `target`, newest episode winning. `sameSeries`: both are copies of one
+   * series (sync, import), so newer info and a newer rename win too. Without it (an alias
+   * folding another sheet in) the target keeps its own info.
+   */
+  function mergeInto(target, source, sameSeries) {
+    target.episodes = target.episodes || {};
     for (const [k, ep] of Object.entries(source.episodes || {})) {
       const cur = target.episodes[k];
-      if (!cur || (ep.updatedAt || 0) > (cur.updatedAt || 0)) {
-        target.episodes[k] = Object.assign({}, ep, {
-          providers: Object.assign({}, cur && cur.providers, ep.providers),
-        });
-      } else {
-        cur.providers = Object.assign({}, ep.providers, cur.providers);
+      const a = (ep && ep.updatedAt) || 0;
+      const b = (cur && cur.updatedAt) || 0;
+      const newer = !cur || a > b || (a === b && (ep.time || 0) > (cur.time || 0));
+      const providers = mergeProviders(cur && cur.providers, ep.providers);
+      target.episodes[k] = Object.assign({}, newer ? ep : cur, { providers });
+    }
+    if (sameSeries) {
+      if (source.meta && (!target.meta || (source.meta.fetchedAt || 0) > (target.meta.fetchedAt || 0))) target.meta = source.meta;
+      if (source.title && (source.titledAt || 0) > (target.titledAt || 0)) {
+        target.title = source.title;
+        target.titledAt = source.titledAt;
+      }
+    } else if (!target.meta && source.meta) target.meta = source.meta;
+    target.updatedAt = Math.max(target.updatedAt || 0, source.updatedAt || 0);
+  }
+
+  /** Deletions, kept with their time so a synced copy can't bring the item back. */
+  function removedOf(db) {
+    db.removed = db.removed || {};
+    db.removed.series = db.removed.series || {};
+    db.removed.episodes = db.removed.episodes || {};
+    return db.removed;
+  }
+
+  function markRemoved(removed, key, ep, at) {
+    removed.episodes[key] = removed.episodes[key] || {};
+    removed.episodes[key][ep] = at;
+  }
+
+  function restoreAfter(removed, series, now) {
+    const out = {};
+    for (const [key, s] of Object.entries(series)) {
+      const copy = Object.assign({}, s, { episodes: Object.assign({}, s.episodes) });
+      if (removed.series[key] && (copy.updatedAt || 0) <= removed.series[key]) copy.updatedAt = now;
+      const gone = removed.episodes[key] || {};
+      for (const [k, ep] of Object.entries(copy.episodes)) {
+        if (gone[k] && (ep.updatedAt || 0) <= gone[k]) copy.episodes[k] = Object.assign({}, ep, { updatedAt: now });
+      }
+      out[key] = copy;
+    }
+    return out;
+  }
+
+  /**
+   * Merge another copy of a library into `db` (mutated): union of sheets and marks,
+   * newest wins per episode, and deletions known to either side apply to both.
+   */
+  function mergeDb(db, incoming) {
+    db.series = db.series || {};
+    db.aliases = Object.assign(db.aliases || {}, incoming.aliases || {});
+    const removed = removedOf(db);
+    const theirs = incoming.removed || {};
+    for (const [key, t] of Object.entries(theirs.series || {})) if (!(removed.series[key] >= t)) removed.series[key] = t;
+    for (const [key, eps] of Object.entries(theirs.episodes || {})) {
+      for (const [k, t] of Object.entries(eps || {})) {
+        if (!(removed.episodes[key] && removed.episodes[key][k] >= t)) markRemoved(removed, key, k, t);
       }
     }
-    if (!target.meta && source.meta) target.meta = source.meta;
-    target.updatedAt = Math.max(target.updatedAt || 0, source.updatedAt || 0);
+    for (const [key, s] of Object.entries(incoming.series || {})) {
+      // A sheet the other copy still files under a title this one has since re-filed (alias).
+      const to = db.aliases[key] && db.aliases[key] !== key ? db.aliases[key] : key;
+      if (!db.series[to]) db.series[to] = Object.assign({}, s, { key: to, episodes: Object.assign({}, s.episodes) });
+      else mergeInto(db.series[to], s, to === key);
+    }
+    // Sheets this copy still keeps under a title that has since been re-filed elsewhere.
+    for (const key of Object.keys(db.series)) {
+      const to = db.aliases[key];
+      if (!to || to === key) continue;
+      if (db.series[to]) mergeInto(db.series[to], db.series[key]);
+      else db.series[to] = Object.assign(db.series[key], { key: to });
+      delete db.series[key];
+    }
+    for (const [key, t] of Object.entries(removed.series)) {
+      if (db.series[key] && (db.series[key].updatedAt || 0) <= t) delete db.series[key];
+    }
+    for (const [key, eps] of Object.entries(removed.episodes)) {
+      const s = db.series[key];
+      if (!s) continue;
+      for (const [k, t] of Object.entries(eps)) if (s.episodes[k] && (s.episodes[k].updatedAt || 0) <= t) delete s.episodes[k];
+    }
+    return db;
+  }
+
+  /** Stable fingerprint of a library's content (not its save time): equal means nothing to sync. */
+  function dbSignature(db) {
+    const stable = (v) => {
+      if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
+      if (v && typeof v === "object") {
+        const keys = Object.keys(v).filter((k) => v[k] !== undefined).sort();
+        return "{" + keys.map((k) => JSON.stringify(k) + ":" + stable(v[k])).join(",") + "}";
+      }
+      return JSON.stringify(v === undefined ? null : v);
+    };
+    return stable({ series: db.series || {}, aliases: db.aliases || {}, removed: db.removed || {} });
   }
 
   function findEntry(db, title, episode) {
@@ -476,7 +582,7 @@
 
   const api = {
     VERSION, FILM, emptyDb, seriesKey, epKey, resolveKey, formatTime, parseTime, hostOf,
-    parseMedia, parseEpisodeLabel, withSeason, isGenericTitle, cleanSeries, applyOp, findEntry, recent, relTime, anilistPlan, marksOf, altMark,
+    parseMedia, parseEpisodeLabel, withSeason, isGenericTitle, cleanSeries, applyOp, mergeDb, dbSignature, findEntry, recent, relTime, anilistPlan, marksOf, altMark,
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

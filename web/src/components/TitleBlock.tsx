@@ -1,7 +1,9 @@
 /* The timesheet's printed title block: name, counts, data source, actions. */
 import { useRef } from "react";
 import { Link } from "react-router-dom";
+import { useAccount } from "../lib/account";
 import { useStore, op } from "../lib/store";
+import { syncNow, useSync } from "../lib/sync";
 import type { Db } from "../lib/ks";
 import { Icon } from "./Icon";
 import { LogoMark } from "./Logo";
@@ -10,6 +12,8 @@ import { useUi } from "./ui";
 export function TitleBlock() {
   const { db, mode, extVersion } = useStore();
   const { openAdd, closeAdd, addRequest, toast } = useUi();
+  const account = useAccount();
+  const sync = useSync();
   const fileRef = useRef<HTMLInputElement>(null);
   const all = Object.values(db.series || {});
   const marks = all.reduce((n, s) => n + Object.keys(s.episodes || {}).length, 0);
@@ -71,6 +75,20 @@ export function TitleBlock() {
         >
           {linkText}
         </span>
+        {sync.status !== "off" && (
+          <span className="sync-state" data-state={sync.status} role="status">
+            {sync.status === "syncing" ? "Syncing with your account…"
+            : sync.status === "synced" ? "Synced with your account"
+            : (
+              <>
+                {sync.message}{" "}
+                <button className="linklike" type="button" onClick={() => syncNow()}>
+                  Retry
+                </button>
+              </>
+            )}
+          </span>
+        )}
       </div>
       <div className="tb-cell tb-actions">
         <button className="btn btn-ink" type="button" aria-expanded={!!addRequest} aria-controls="add-panel" onClick={() => (addRequest ? closeAdd() : openAdd({}))}>
@@ -83,6 +101,16 @@ export function TitleBlock() {
         <button className="btn btn-icon" type="button" title="Import marks from JSON" aria-label="Import marks from JSON" onClick={() => fileRef.current?.click()}>
           <Icon name="up" />
         </button>
+        {account.status === "signed-in" ? (
+          <Link className="btn btn-flat account-chip" to="/login" title="Your account">
+            {account.user.picture && <img src={account.user.picture} alt="" width={24} height={24} />}
+            <span>{account.user.name}</span>
+          </Link>
+        ) : account.status === "signed-out" ? (
+          <Link className="btn" to="/login">
+            Sign in
+          </Link>
+        ) : null}
         <input
           ref={fileRef}
           type="file"

@@ -9,9 +9,9 @@ Ada dua bagian:
 | Bagian | Folder | Fungsi |
 |---|---|---|
 | Extension (Chrome/Edge, Manifest V3) | `extension/` | Mendeteksi video yang diputar (termasuk di dalam iframe), menebak judul dan episode, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
-| Website (React + Vite + TypeScript SPA) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
+| Website (React + Vite + TypeScript SPA, API Hono di `web/worker/`) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
 
-Tidak ada backend. Semua data disimpan lokal di browser.
+Website punya backend kecil (Hono di Cloudflare Workers + D1) untuk login dengan MyAnimeList dan sinkron library ke akun. Mark tetap disimpan lokal di browser dan extension, jadi semuanya jalan juga tanpa login.
 
 ## Menjalankan
 
@@ -23,11 +23,26 @@ npm install
 npm run dev
 ```
 
-Lalu buka http://localhost:5173. Deploy ke Cloudflare Pages: `npm run deploy` (branch produksi proyek ini bernama `production`). Build saja: `npm run build` (hasil di `web/dist/`, preview dengan `npm run preview`). Port harus tetap 5173 di localhost agar extension bisa terhubung.
+Lalu buka http://localhost:5173. Port harus tetap 5173 di localhost agar extension bisa terhubung. Dev server yang sama juga menjalankan API (`/api/*`) dan database D1 lokal.
+
+**Backend (sekali saja):**
+1. `npm run db:migrate` membuat tabel di D1 lokal.
+2. Salin `.dev.vars.example` ke `.dev.vars`, lalu isi `TOKEN_KEY` (perintah pembuatnya ada di file itu).
+3. Untuk login MyAnimeList: buat client di https://myanimelist.net/apiconfig (App Type: **web**), daftarkan redirect URL `http://localhost:5173/api/auth/mal/callback`, lalu isi `MAL_CLIENT_ID` dan `MAL_CLIENT_SECRET` di `.dev.vars`.
+
+**Deploy (Cloudflare Workers):**
+1. `npx wrangler login`
+2. `npx wrangler d1 create kumostamp`, lalu salin `database_id`-nya ke `wrangler.jsonc`.
+3. `npm run db:migrate:remote`
+4. `npx wrangler secret put MAL_CLIENT_ID` (ulangi untuk `MAL_CLIENT_SECRET` dan `TOKEN_KEY`). Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
+5. `npm run deploy`
+
+Build saja: `npm run build`, lalu `npm run preview` (menjalankan Worker hasil build).
 
 Halaman:
 - `/`: library, berisi band *Continue*, filter (`?show=all&sort=az&q=…` tersimpan di URL), dan satu sheet per series.
 - `/series/:key`: satu series dengan semua episode. Kalau sudah di-link ke katalog, daftar episode (judul, tanggal tayang, durasi) diambil otomatis dari AniList / TVmaze / IMDb. Mark kamu ditempel di atasnya, dan episode yang belum ditonton punya tombol *Mark*.
+- `/login`: masuk dengan MyAnimeList, atau lihat akun yang sedang masuk dan keluar.
 
 ### 2. Extension
 
@@ -104,6 +119,13 @@ Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman nav
 - Mark situs lain tidak dihapus oleh mark baru, sehingga bisa dipilih kapan saja.
 
 **Sinkron ke website.** `bridge.js` hanya aktif di `localhost`, `127.0.0.1`, dan `file://`, dan hanya pada halaman yang punya atribut `<html data-kumostamp-app>`. Bridge mengirim database ke halaman dan meneruskan perubahan dari website ke background worker, yang menjadi satu-satunya penulis data. Tanpa extension, website tetap jalan dan menyimpan ke `localStorage` (mark itu dipindahkan ke extension setelah extension terpasang).
+
+**Sinkron ke akun.** Setelah login dengan MyAnimeList (halaman `/login`), website menggabungkan library di browser ini (extension atau `localStorage`) dengan salinan di server, lalu menyimpan hasilnya ke keduanya. Browser lain yang login ke akun yang sama mendapat mark yang sama tanpa export/import file.
+- **Penggabungannya sama seperti import:** mark terbaru menang per episode, mark per situs digabung, dan info katalog yang lebih baru serta judul yang diganti manual ikut menang.
+- **Hapus tetap terhapus.** Penghapusan series atau episode dicatat beserta waktunya (`removed` di database), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali. *Undo* hapus juga ikut tersinkron.
+- **Kapan sinkron:** sekitar 2 detik setelah ada perubahan, saat tab kembali aktif, dan setiap menit selama tab terbuka. Status ada di header (*Synced with your account*).
+- **Untuk sekarang website yang menjembatani**, jadi mark dari extension baru naik ke server saat website dibuka. Extension yang sinkron sendiri menyusul.
+- Setelah update ini, **reload extension** di `chrome://extensions` supaya catatan hapus dan aturan penggabungan yang baru juga dipakai di extension.
 
 **Sinkron ke AniList.** Opsional, dihubungkan lewat popup (*Connected accounts*). Begitu sebuah episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di list AniList kamu (progres = episode yang sedang diputar). Selesai menonton tidak mengirim apa pun; status *Completed* di episode terakhir kamu set sendiri di AniList. Setiap pembaruan dan menampilkan kartu kecil *AniList updated · Dandadan 3/12* dengan tombol **Undo**.
 - **Hanya satu arah dan hanya naik.** Progres yang sudah di AniList tidak pernah diturunkan, dan entri yang sedang *Rewatching* tidak disentuh. Kumostamp tidak pernah menandai *Completed*.

@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local dev. In production use: npx wrangler secret put <NAME>
+# From https://myanimelist.net/apiconfig (App Type: web).
+# Redirect URL to register: http://localhost:5173/api/auth/mal/callback
+MAL_CLIENT_ID=
+MAL_CLIENT_SECRET=
+# 32 random bytes, base64: node -e "console.log(crypto.randomBytes(32).toString('base64'))"
+TOKEN_KEY=
