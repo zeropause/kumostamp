@@ -2,257 +2,95 @@
 
 Simpan menit terakhir yang kamu tonton di anime atau series, lalu lanjutkan di situs streaming mana pun.
 
-Contoh: kamu nonton *JoJo Part 6* episode 2 sampai menit 26:14 di situs A, lalu pindah ke situs B. Di situs B, Kumostamp menawarkan **Jump to 26:14**.
+Contoh: kamu nonton *JoJo Part 6* episode 2 sampai 26:14 di situs A, lalu pindah ke situs B. Begitu episode itu dibuka di situs B, muncul tombol *Jump to 26:14*.
 
-Ada dua bagian:
-
-| Bagian | Folder | Fungsi |
+| Bagian | Folder | Isi |
 |---|---|---|
-| Extension (Chrome/Edge, Manifest V3) | `extension/` | Mendeteksi video yang diputar (termasuk di dalam iframe), menebak judul dan episode, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
-| Website (React + Vite + TypeScript SPA, API Hono di `web/worker/`) | `web/` | Daftar series dan timestamp, halaman per series dengan daftar episode lengkap dari AniList / TVmaze / IMDb, tambah manual, edit, hapus, export/import |
+| Extension (Chrome/Edge, Manifest V3) | `extension/` | Membaca video yang diputar beserta judul dan episodenya, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
+| Website (React + Vite + TypeScript) | `web/` | Library series dan timestamp, daftar episode dari AniList / TVmaze / IMDb, tambah dan edit manual, export/import |
+| API (Hono di Cloudflare Workers + D1) | `web/worker/` | Login MyAnimeList, sinkron library antar browser, update list MAL |
 
-Website punya backend kecil (Hono di Cloudflare Workers + D1) untuk login dengan MyAnimeList dan sinkron library ke akun. Mark tetap disimpan lokal di browser dan extension, jadi semuanya jalan juga tanpa login.
+Mark selalu disimpan lokal di browser dan extension, jadi semuanya tetap jalan tanpa login.
 
 ## Menjalankan
 
-### 1. Website
+### Website
 
 ```bash
 cd web
 npm install
+cp .dev.vars.example .dev.vars   # isi TOKEN_KEY, MAL_CLIENT_ID, MAL_CLIENT_SECRET
+npm run db:migrate               # ulangi setiap ada file baru di web/migrations/
 npm run dev
 ```
 
-Lalu buka http://localhost:5173. Port harus tetap 5173 di localhost agar extension bisa terhubung. Dev server yang sama juga menjalankan API (`/api/*`) dan database D1 lokal.
+Buka http://localhost:5173. Port harus 5173 supaya extension mau terhubung. Dev server yang sama menjalankan API (`/api/*`) dan D1 lokal.
 
-**Backend (sekali saja):**
-1. `npm run db:migrate` membuat tabel di D1 lokal. Jalankan lagi setiap ada file baru di `web/migrations/`.
-2. Salin `.dev.vars.example` ke `.dev.vars`, lalu isi `TOKEN_KEY` (perintah pembuatnya ada di file itu).
-3. Untuk login MyAnimeList: buat client di https://myanimelist.net/apiconfig (App Type: **web**), daftarkan redirect URL `http://localhost:5173/api/auth/mal/callback`, lalu isi `MAL_CLIENT_ID` dan `MAL_CLIENT_SECRET` di `.dev.vars`.
+Client MAL dibuat di https://myanimelist.net/apiconfig (App Type: web) dengan redirect URL `http://localhost:5173/api/auth/mal/callback`.
 
-**Deploy (Cloudflare Workers):**
-1. `npx wrangler login`
-2. `npx wrangler d1 create kumostamp`, lalu salin `database_id`-nya ke `wrangler.jsonc`.
-3. `npm run db:migrate:remote`
-4. `npx wrangler secret put MAL_CLIENT_ID` (ulangi untuk `MAL_CLIENT_SECRET` dan `TOKEN_KEY`). Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
-5. `npm run deploy`
+### Extension
 
-Build saja: `npm run build`, lalu `npm run preview` (menjalankan Worker hasil build).
+1. Buka `chrome://extensions` (atau `edge://extensions`) dan aktifkan Developer mode.
+2. Klik Load unpacked, pilih folder `extension/`.
+3. Reload tab website. Status di header berubah menjadi *Extension connected*.
 
-Halaman:
-- `/`: library, berisi band *Continue*, filter (`?show=all&sort=az&q=…` tersimpan di URL), dan satu sheet per series.
-- `/series/:key`: satu series dengan semua episode. Kalau sudah di-link ke katalog, daftar episode (judul, tanggal tayang, durasi) diambil otomatis dari AniList / TVmaze / IMDb. Mark kamu ditempel di atasnya, dan episode yang belum ditonton punya tombol *Mark*.
-- `/login`: masuk dengan MyAnimeList, atau lihat akun yang sedang masuk dan keluar.
+Setelah extension di-reload, refresh juga tab website yang sedang terbuka.
 
-### 2. Extension
+### Deploy
 
-1. Buka `chrome://extensions` (atau `edge://extensions`).
-2. Aktifkan **Developer mode**.
-3. Klik **Load unpacked**, pilih folder `kumotstamp/extension`.
-4. Reload tab website. Di header, status *Source* berubah menjadi **Extension connected**.
+```bash
+npx wrangler login
+npx wrangler d1 create kumostamp        # salin database_id ke wrangler.jsonc
+npm run db:migrate:remote
+npx wrangler secret put MAL_CLIENT_ID   # ulangi untuk MAL_CLIENT_SECRET dan TOKEN_KEY
+npm run deploy
+```
 
-## Cara kerja
+Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
 
-**Deteksi.** `content.js` berjalan di setiap frame dan memilih `<video>` terbesar yang sedang diputar (durasi lebih dari 45 detik). Posisi video dikirim ke background worker setiap ~4 detik, juga saat pause, seek, ganti tab, dan saat halaman ditutup. Frame paling atas membaca `og:title`, `<h1>`, `document.title`, dan URL, lalu `KS.parseMedia` menebak series dan episode, misalnya:
+## Cara kerja singkat
 
-| Judul halaman | Hasil |
-|---|---|
-| `Nonton Jojo no Kimyou na Bouken Part 6 Episode 2 Sub Indo \| Otakudesu` | Jojo no Kimyou na Bouken Part 6 · Ep 2 |
-| `Frieren - 05 [1080p]` | Frieren · Ep 5 |
-| `Breaking Bad S02E05 \| Netflix` | Breaking Bad Season 2 · Ep 5 |
-| `葬送のフリーレン 第3話` | 葬送のフリーレン · Ep 3 |
-| URL `/watch/jojo-part-6-episode-12` | Jojo Part 6 · Ep 12 |
+Extension mengambil `<video>` terbesar yang sedang diputar (termasuk di iframe), lalu membaca judul dan episode dari state player, DOM per situs, JSON-LD, Media Session, URL, dan judul halaman. Hasil yang tidak yakin baru disimpan setelah kamu konfirmasi di popup.
 
-Judul halaman hanyalah sumber terakhir. `detect.js` mencoba sumber dari yang paling bisa dipercaya:
+Tiap episode punya satu mark per situs. Saat episode yang sama diputar di situs lain, player lompat ke mark terbaru, dengan tombol Undo.
 
-1. **State player di halaman** (`main-world.js`, berjalan di dunia JS halaman): Netflix menyimpan judul, season, dan episode di `netflix.appContext`, sedangkan `document.title` cuma "Netflix".
-2. **DOM player per situs**: overlay judul Netflix, Prime Video, Disney+/Hotstar, Crunchyroll, YouTube.
-3. **JSON-LD** `TVEpisode` / `Movie` (banyak situs streaming menyertakannya).
-4. **Judul player + label episode di bawahnya**, misalnya `<h1>Dandadan</h1><p>E3 · 23m</p>` atau `<h1>Game of Thrones</h1><p>S2 E3 … · 53m</p>`. Pola ini dipakai banyak situs streaming (Movy dan sejenisnya).
-5. **Media Session** (`navigator.mediaSession.metadata`), yang diisi player untuk kontrol media OS.
-6. **Angka di akhir alamat halaman**: `/anime/dandadan-lzcmw/3` → episode 3, `/tv/1399/2/3` → season 2 episode 3. Angka setelah kata jenis (`/tv/1399`, `/movie/550`) dianggap ID, bukan episode.
-7. **Parameter URL dan path film**: `?season=1&episode=3` (juga `s`, `ep`, `episode_number`, dst.) dengan nama dari `<h1>` atau judul halaman; path `/movie/…` atau `/film/…` dianggap film.
-8. **Judul halaman / og:title / h1 / URL** (tabel di atas).
+Setelah login MyAnimeList, library di browser digabung dengan salinan di server: mark terbaru menang per episode, dan yang sudah dihapus tetap terhapus. Episode yang diputar minimal 1 menit membuat anime itu *Watching* di list MAL (dan AniList, kalau dihubungkan) dengan progres = nomor episode. Progres tidak pernah diturunkan, dan *Completed* tidak pernah di-set otomatis.
 
-Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman navigasi seperti "Beranda", "Browse", atau "Home" tidak pernah dianggap judul. Tebakan yang lemah ditampilkan di popup; tekan Enter (atau *Mark now*) untuk mengonfirmasi.
-
-**Situs yang ganti episode tanpa pindah halaman.** Banyak situs memuat episode berikutnya di halaman yang sama, dengan URL yang tidak berubah. Supaya mark tidak salah masuk:
-- Begitu pemutar memuat media baru (`loadstart` / `emptied`, juga dari dalam iframe), penyimpanan ditahan sampai 5 detik ("Reading which episode this is…") dan halaman induk diminta membaca ulang judul dan episodenya.
-- Perubahan isi halaman (judul, heading, label episode) memicu pembacaan ulang dalam kurang dari 1 detik, tidak lagi menunggu polling 2 detik.
-- Jawaban yang yakin tidak lagi "menempel" selama URL sama. Jawaban itu hanya dipakai kalau judul dan heading halaman masih sama seperti saat dibaca.
-- Posisi video dari episode sebelumnya dibuang saat halaman menyebut episode lain, jadi tidak ikut tersimpan atau memicu sync ke episode yang salah.
-- Koreksi manual di popup gugur begitu halaman dengan yakin menyebut episode lain.
-- **Data statis yang basi.** Banyak situs hanya menulis `og:title` dan JSON-LD saat halaman pertama dimuat, jadi keduanya tetap menyebut episode pertama setelah pindah episode (contoh: reanime.to). Episode yang disebut URL (`?ep=3`) dan `<title>` yang hidup menang atas keduanya.
-
-**Kalau deteksi gagal**, buka popup lalu klik *How this was detected*. Bagian itu menampilkan hasil setiap pembaca, misalnya `page-world: netflix: metadata not readable` atau `page-title: nothing`. Kirim isinya kalau ada situs yang belum terbaca.
-
-**Koreksi.** Kalau tebakannya salah, perbaiki di popup extension. Koreksi itu disimpan sebagai *alias*, jadi judul yang sama di situs tersebut otomatis masuk ke series yang benar di kunjungan berikutnya. Saat menambahkan series dari AniList/TVmaze/IMDb, judul romaji dan Inggrisnya juga didaftarkan sebagai alias.
-
-**Resume.** Saat kamu membuka episode yang sudah punya mark (minimal 30 detik dan belum selesai), muncul kartu kecil di pojok kiri bawah: *Jump to 26:14*. Popup juga punya tombol yang sama.
-
-**Kalau nomor episode tidak terbaca.** Setiap hasil deteksi punya jenis: *episode* (nomornya terbaca), *film* (sumbernya sendiri bilang ini film, misalnya tipe movie di Netflix atau JSON-LD `Movie`), atau *unknown* (series ketemu, nomor episode tidak). Safeguard-nya:
-- **Unknown tidak pernah disimpan atau di-sync otomatis.** Popup menulis "Found the series, not the episode number". Ketik nomornya lalu Enter, atau kosongkan Ep lalu Enter kalau memang film.
-- **"Film" palsu ditolak.** Kalau halaman mengaku film tapi series itu sudah punya episode bernomor (atau katalognya bilang lebih dari 1 episode), mark tidak disimpan sampai kamu isi nomornya.
-- **Sync hanya ke episode yang sama persis**, jadi tidak pernah melompat ke timestamp episode lain.
-- **Mark lama tanpa nomor** (dari sebelum safeguard ini) ditandai `??` di website. Isi "Which one?" lalu Move untuk memindahkannya ke episode yang benar. Kalau episode itu sudah punya mark, yang lebih baru dipertahankan.
-
-**Judul dalam bahasa lain.** Netflix (dan situs lain) bisa menampilkan judul terjemahan, misalnya "Hal-Hal Aneh" untuk Stranger Things. Supaya tetap jadi satu sheet:
-- **Identitas, bukan judul.** Sheet dianggap sama kalau terhubung ke entri katalog yang sama atau berbagi ID lintas katalog (AniList, MyAnimeList, IMDb, TVmaze, Netflix, Wikidata). Sheet ganda yang ketahuan sama digabung, dan mark terbaru menang per episode.
-- **ID dari situsnya.** ID acara Netflix dan ID TMDB di URL Movy (`/tv/1399`) sama di semua bahasa. Extension mencarinya di Wikidata untuk mendapatkan ID katalognya.
-- **Judul terjemahan lain** dicari di Wikidata dalam bahasa halaman itu (`<html lang>`).
-- **Tidak ada sheet ganda saat masih mencari.** Untuk judul yang belum pernah dilihat, penyimpanan ditahan sampai 15 detik sambil identitasnya dicek. Popup menulis "Checking whether you've watched this under another title…".
-- **Semua aksara didukung.** Judul berhuruf Thailand, Korea, Rusia, Arab, Vietnam, dan lainnya masing-masing punya sheet sendiri. Nomor episode dan season dikenali dalam banyak bahasa: "Tập 5", "ตอนที่ 5", "5화", "Серия 5", "Capítulo 5", "Folge 5", "5. Bölüm", "第5話", "Phần 2", "시즌 2", "Staffel 2", dan seterusnya.
-- **Di halaman berbahasa non-Inggris**, label Wikidata yang persis sama dicek lebih dulu, karena katalog kadang punya acara lain yang kebetulan berjudul terjemahan yang sama. Kalau Wikidata tidak menjawab, hasilnya ditandai *best guess*.
-- **Kalau tetap tidak ketemu**, koreksi judulnya sekali di popup. Judul terjemahan itu diingat dan sheet-nya digabung.
-
-**Sync antar situs.** Timestamp yang dipakai selalu mark terbaru dari situs mana pun. Contoh: kamu berhenti di 02:34 di Netflix, lalu membuka episode yang sama di situs B.
-- Dengan *Sync to my mark on other sites* aktif (default), begitu video di situs B mulai main, player langsung lompat ke 02:34. Muncul kartu kecil "Synced to 02:34 from netflix.com" dengan tombol **Undo** (kembali ke posisi awal dan mulai mencatat dari sana).
-- Kalau setelan itu dimatikan, kartu menawarkan **Sync to 02:34**. Tombol yang sama juga ada di popup.
-- Halaman yang posisinya *di belakang* mark tidak akan menimpa mark sampai ia sync. Jadi 0:05 di situs B tidak menghapus 02:34. Kalau memang mau mulai ulang di situ, tekan **Mark now**.
-- Resume mendarat tepat di detik yang tersimpan (tanpa mundur beberapa detik), dan detik disimpan dengan pembulatan ke bawah seperti yang ditampilkan player.
-- Di Netflix, seek dilakukan lewat API player Netflix (`main-world.js`), karena mengubah waktu `<video>` secara langsung membuat Netflix error (M7375).
-
-**Saved marks: mark dari beberapa situs.** Kumostamp menyimpan satu mark per situs untuk tiap episode. Sync mengikuti mark **terbaru** (situs yang terakhir kamu tonton), bukan yang terjauh. Kalau situs A terakhir ditonton di 06:37 dan situs B pernah sampai 14:56, sync membawa kamu ke 06:37. Untuk memilih:
-- Popup menampilkan bagian *Saved marks* untuk episode yang sedang dibuka: semua situs, waktunya, kapan terakhir, dan label **Latest** / **Furthest**. **Jump** langsung memindahkan video di tab ini ke waktu itu (tepat di detiknya), **Open** membuka episode di situs tersebut.
-- Kartu sync/resume di halaman ikut menawarkan mark lain yang lebih jauh (selisih lebih dari 1 menit): *Also 14:56 on B · Use 14:56 instead*.
-- Setelah kamu Jump dan memutar dari situ, posisi itu menjadi mark terbaru, jadi situs lain ikut sync ke sana.
-- Mark situs lain tidak dihapus oleh mark baru, sehingga bisa dipilih kapan saja.
-
-**Sinkron ke website.** `bridge.js` hanya aktif di `localhost`, `127.0.0.1`, dan `file://`, dan hanya pada halaman yang punya atribut `<html data-kumostamp-app>`. Bridge mengirim database ke halaman dan meneruskan perubahan dari website ke background worker, yang menjadi satu-satunya penulis data. Tanpa extension, website tetap jalan dan menyimpan ke `localStorage` (mark itu dipindahkan ke extension setelah extension terpasang).
-
-**Sinkron ke akun.** Setelah login dengan MyAnimeList (halaman `/login`), website menggabungkan library di browser ini (extension atau `localStorage`) dengan salinan di server, lalu menyimpan hasilnya ke keduanya. Browser lain yang login ke akun yang sama mendapat mark yang sama tanpa export/import file.
-- **Penggabungannya sama seperti import:** mark terbaru menang per episode, mark per situs digabung, dan info katalog yang lebih baru serta judul yang diganti manual ikut menang.
-- **Hapus tetap terhapus.** Penghapusan series atau episode dicatat beserta waktunya (`removed` di database), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali. *Undo* hapus juga ikut tersinkron.
-- **Kapan sinkron:** sekitar 2 detik setelah ada perubahan, saat tab kembali aktif, dan setiap menit selama tab terbuka. Status ada di header (*Synced with your account*).
-- **Extension bisa sinkron sendiri.** Di popup, *Connected accounts* → *Kumostamp* → **Connect** membuka halaman izin di library (alamatnya dari *Library address*). Setelah diizinkan, extension menyimpan *device token* (hanya di background worker, tidak pernah ke halaman web) dan sinkron tanpa website dibuka: mark baru naik paling lambat ~30 detik, mark dari browser lain ditarik tiap 2 menit dan saat browser dibuka. **Disconnect** mencabut token di server juga.
-- Tanpa extension terhubung, website tetap menjembatani: mark dari extension naik saat website dibuka.
-- Setelah update ini, **reload extension** di `chrome://extensions` supaya catatan hapus dan aturan penggabungan yang baru juga dipakai di extension.
-
-**Update list MyAnimeList.** Akun yang login dengan MyAnimeList ikut diperbarui otomatis oleh server, memakai token MAL milikmu:
-- Episode yang diputar minimal 1 menit (dalam 30 hari terakhir) membuat anime itu *Watching* di MAL dengan progres = nomor episode itu.
-- Progres tidak pernah diturunkan, entri *Completed* dan yang sedang *rewatching* tidak disentuh, dan Kumostamp tidak pernah menandai *Completed*.
-- Hanya series yang terhubung ke AniList atau MyAnimeList; ID MAL dari AniList dicari otomatis (`idMal`). Series dari TVmaze/IMDb dilewati, begitu juga nomor episode yang melebihi jumlah episode entri (season yang nomornya berlanjut).
-- Terjadi setiap kali library tersinkron ke server, dan sekali saat website dibuka. Hasilnya tampil di header, misalnya *MyAnimeList: Frieren → 3/28*.
-- Token MAL di-refresh otomatis sebelum kedaluwarsa.
-
-**Sinkron ke AniList.** Opsional, dihubungkan lewat popup (*Connected accounts*). Begitu sebuah episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di list AniList kamu (progres = episode yang sedang diputar). Selesai menonton tidak mengirim apa pun; status *Completed* di episode terakhir kamu set sendiri di AniList. Setiap pembaruan dan menampilkan kartu kecil *AniList updated · Dandadan 3/12* dengan tombol **Undo**.
-- **Hanya satu arah dan hanya naik.** Progres yang sudah di AniList tidak pernah diturunkan, dan entri yang sedang *Rewatching* tidak disentuh. Kumostamp tidak pernah menandai *Completed*.
-- **Hanya series yang terhubung ke AniList.** Series dari TVmaze atau IMDb dilewati. Season yang nomornya berlanjut (Ep 29 yang sebenarnya S2 Ep 5) belum didukung.
-- **Gagal karena jaringan akan dicoba lagi** otomatis (antrean di `chrome.storage.local`). Kalau login kedaluwarsa, popup menampilkan *Reconnect*.
-- **Token** disimpan hanya di extension, tidak ikut export dan tidak pernah dikirim ke website. Login memakai Client ID AniList milik kamu sendiri; redirect URL-nya tampil di popup.
-
-**Poster & info otomatis.** Begitu sebuah series pertama kali tersimpan, background extension langsung mencari info di katalog (sekitar 1 detik), tanpa perlu membuka website. Hasilnya tampil di popup (poster, sinopsis, jumlah episode) dan di website. Saat extension di-install atau browser dibuka, series lama yang belum punya info ikut dicarikan. Tanpa extension, website yang mencarikan.
-
-Jenisnya (anime, serial TV, atau film) tidak ditebak di depan. AniList dan TVmaze dicari sekaligus (AniList dan IMDb untuk film), lalu tiap kandidat diberi skor dari:
-- kemiripan judul, termasuk judul alternatif dan urutan kata;
-- film atau episode (film hanya ke entri movie, episode tidak pernah ke movie);
-- nomor episode dibanding jumlah episode entri (Ep 4 tidak cocok ke entri 1 episode);
-- durasi video dibanding durasi katalog;
-- situs streaming (situs khusus anime memberi bonus ke AniList).
-
-Kalau dua kandidat teratas berdekatan, yang terbaik tetap dipakai tapi ditandai *best guess*, dan popup maupun website menawarkan **Not this one?** berisi 2–3 alternatif yang bisa diganti sekali klik. Logika ini ada di `extension/lib/catalog.js` dan dipakai bersama oleh extension dan website (disalin ke `web/src/lib/catalog-shared.js` oleh `scripts/sync-shared.mjs`).
-
-**Info series.** Tombol *Add series* mencari di:
-- **AniList** (GraphQL, tanpa API key) untuk anime
-- **TVmaze** (tanpa API key) untuk serial TV
-- **IMDb via Cinemeta** (tanpa API key, dari Stremio) untuk film: poster IMDb, sinopsis, durasi, sutradara, rating IMDb
-- **Just a title** untuk input manual tanpa katalog
-
-Sinopsis, poster, jumlah episode, dan status disimpan bersama series. Tombol ⟳ di tiap sheet mengambil deskripsi terbaru, dan website otomatis me-refresh info yang lebih tua dari 3 hari (maksimal 8 per kunjungan, satu per satu).
-
+Detailnya ada di [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Struktur
 
 ```
-kumotstamp/
-├─ extension/
-│  ├─ manifest.json
-│  ├─ background.js      satu-satunya penulis database (chrome.storage.local)
-│  ├─ content.js         deteksi video + judul, kartu resume
-│  ├─ bridge.js          penghubung ke website (khusus origin lokal)
-│  ├─ popup.html/css/js
-│  ├─ tokens.css         ← disalin dari web/css/tokens.css
-│  ├─ lib/core.js        parsing judul + operasi data (sumber utama)
-│  ├─ lib/accounts.js    login AniList (token hanya di worker)
-│  ├─ lib/anilist-sync.js antrean + push progres ke AniList, Undo
-│  └─ icons/
-├─ extension/detect.js   urutan pembaca judul/episode + jejak diagnosa
-├─ extension/main-world.js  pembaca state player (Netflix) di dunia JS halaman
-├─ web/                  React + Vite + TypeScript
-│  ├─ index.html
-│  └─ src/
-│     ├─ main.tsx · App.tsx
-│     ├─ routes/        Library.tsx · SeriesPage.tsx
-│     ├─ components/    TitleBlock · AddPanel · ContinueBand · Sheet · Ruler · Icon · ui (toast, panel)
-│     ├─ lib/           ks.ts (tipe) · core.js (salinan) · store.ts · catalog.ts · sample.ts
-│     └─ styles/        tokens.css (sumber utama token desain) · app.css
-├─ scripts/
-│  ├─ sync-shared.mjs    salin core.js & tokens.css di antara kedua bagian
-│  └─ render-icons.mjs   render ikon PNG extension (16–128 px) dari logo
-└─ PRODUCT.md
+extension/
+  background.js        satu-satunya penulis database (chrome.storage.local)
+  content.js           deteksi video, kartu resume
+  detect.js            urutan pembaca judul/episode + jejak diagnosa
+  main-world.js        pembaca state player (Netflix) di dunia JS halaman
+  bridge.js            penghubung ke website
+  popup.html/css/js
+  lib/core.js          parsing judul + operasi data (sumber utama)
+  lib/catalog.js       pencarian katalog dan skor kecocokan (sumber utama)
+  lib/accounts.js      login AniList
+  lib/anilist-sync.js  antrean update list AniList
+  lib/cloud-sync.js    sinkron extension ke akun
+web/
+  src/routes/          Library, SeriesPage, Login, ExtensionConnect
+  src/components/
+  src/lib/             store, sync, catalog, core.js dan catalog-shared.js (salinan)
+  src/styles/          tokens.css (sumber utama token desain), app.css
+  worker/              API: auth MAL, library, sinkron MAL
+  migrations/          skema D1
+scripts/
+  sync-shared.mjs      salin core.js, catalog.js, dan tokens.css di antara kedua bagian
+  render-icons.mjs     render ikon PNG extension dari logo
 ```
 
-Setelah mengedit `extension/lib/core.js` atau `web/css/tokens.css`, jalankan:
-
-```bash
-node scripts/sync-shared.mjs
-```
-
-## Bentuk data
-
-```json
-{
-  "version": 1,
-  "series": {
-    "jojos-bizarre-adventure-stone-ocean": {
-      "title": "JoJo's Bizarre Adventure: Stone Ocean",
-      "meta": { "source": "anilist", "id": 131942, "synopsis": "…", "episodes": 12, "fetchedAt": 0 },
-      "episodes": {
-        "2": {
-          "episode": 2, "time": 1574, "duration": 1440, "finished": false,
-          "lastHost": "situs-b.example",
-          "providers": { "situs-b.example": { "url": "https://…", "time": 1574 } }
-        }
-      }
-    }
-  },
-  "aliases": { "jojo-no-kimyou-na-bouken-stone-ocean": "jojos-bizarre-adventure-stone-ocean" }
-}
-```
-
-Export/import di website menggunakan format ini. Saat import digabung, mark yang lebih baru yang dipakai.
+Setelah mengedit `extension/lib/core.js`, `extension/lib/catalog.js`, atau `web/src/styles/tokens.css`, jalankan `node scripts/sync-shared.mjs`.
 
 ## Batasan
 
-- Situs yang memutar video lewat plugin non-HTML5 atau canvas DRM tertutup tidak bisa dibaca.
+- Video lewat plugin non-HTML5 atau canvas DRM tidak bisa dibaca.
 - Judul diambil dari halaman, jadi kadang perlu dikoreksi sekali per situs.
-- Jump-to-time memindahkan `currentTime` pada video; beberapa player custom bisa menimpanya. Kalau begitu, salin waktunya (tombol *Copy*) dan seek manual.
-
-## Perkiraan cakupan deteksi
-
-Ini **perkiraan kasar, bukan hasil pengukuran**: belum ada daftar situs uji atau tes otomatis, dan baru sebagian kecil situs yang pernah diperiksa. Secara keseluruhan sekitar **65–75%** situs streaming yang umum dipakai kemungkinan terbaca (judul dan nomor episode).
-
-| Kategori situs | Perkiraan | Catatan |
-|---|---|---|
-| Netflix, Prime Video, Disney+, Crunchyroll, YouTube | ~90% | Pembaca khusus per situs. Selector DOM Prime dan Disney+ bisa berubah tanpa pemberitahuan. |
-| Situs anime/film dengan judul dan episode di judul halaman, `<h1>` + label, atau URL (Otakudesu, Movy, 7movies, dan sejenisnya) | ~75% | Pola judul, label episode (`S1 · E3`, `Ep 3`, dll.), parameter URL (`?season=1&episode=3`), dan path film sudah ditangani. |
-| Layout tidak biasa: nomor episode hanya di tombol daftar, judul dimuat belakangan lewat JavaScript, atau teks di dalam gambar | ~30–40% | Belum ada pembaca untuk pola ini. |
-| Player di iframe lintas-origin dengan halaman induk tanpa info | rendah | Videonya terbaca, judulnya tidak. |
-| DRM canvas atau plugin non-HTML5 | 0% | Videonya sendiri tidak bisa dibaca. |
-
-Situs yang gagal bisa dilaporkan lewat isi *How this was detected* di popup. Angka ini akan diganti hasil ukur setelah ada test suite (lihat Rencana berikutnya).
-
-## Logo
-
-Huruf **K** yang lengan dan kakinya adalah dua jarum jam, berayun dari batangnya di dalam setengah dial. Kakinya berwarna merah pensil: tempat kamu berhenti.
-
-- `web/public/logo.svg`: logo utama, tinta di atas terang.
-- `web/public/favicon.svg`: favicon, ikut mode gelap.
-- `web/src/components/Logo.tsx`: komponen React. Warnanya `currentColor`, jadi otomatis ikut tema.
-- `extension/icons/icon{16,32,48,128}.png`: ikon toolbar, logo di atas kertas timesheet. Render ulang dengan `node scripts/render-icons.mjs` (butuh Edge atau Chrome).
-
-
-## Rencana berikutnya
-
-- **Sinkron ke profil MyAnimeList / AniList.** Episode yang selesai ditonton otomatis ditandai di list kamu. Butuh login OAuth ke MAL/AniList, jadi extension akan menyimpan token akun. Ini pertama kalinya Kumostamp menyimpan sesuatu di luar browser, jadi cakupannya perlu diputuskan dulu.
-- **Tes otomatis.** Sejauh ini pengujian masih berupa simulasi ad-hoc (Node untuk `background.js`, Edge headless untuk deteksi, seek, dan tangkapan layar). Rencananya dijadikan test suite yang bisa dijalankan ulang, misalnya Vitest untuk `core.js`/`catalog.js` dan Playwright untuk alur extension.
+- Beberapa player custom menimpa `currentTime`. Kalau begitu, salin waktunya (tombol Copy) dan seek manual.
+- Series dari TVmaze atau IMDb tidak ikut ke list MAL/AniList. Season yang nomor episodenya berlanjut (Ep 29 yang sebenarnya S2 Ep 5) belum didukung.
+- Belum ada tes otomatis.

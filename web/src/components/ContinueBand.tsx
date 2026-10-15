@@ -29,7 +29,7 @@ export function ContinueBand({ db }: { db: Db }) {
         </div>
         <div className="cb-ep">
           <span className="cell-label">{key === KS.FILM && !isEpisodic(series) ? "Film" : "Episode"}</span>
-          <span className="cb-ep-num">{key !== KS.FILM ? epCode(key) : isEpisodic(series) ? "??" : "—"}</span>
+          <span className="cb-ep-num">{key !== KS.FILM ? epCode(key) : isEpisodic(series) ? "??" : epCode(key)}</span>
         </div>
         <div className="cb-time">
           <span className="cell-label">{ep.finished ? "Finished" : "Stopped at"}</span>

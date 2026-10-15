@@ -86,7 +86,7 @@
           </div>
           <div class="field">
             <label for="f-ep">Ep</label>
-            <input id="f-ep" class="ep" name="episode" inputmode="numeric" placeholder="—">
+            <input id="f-ep" class="ep" name="episode" inputmode="numeric" placeholder="Film">
           </div>
           <button type="submit" hidden></button>
         </form>

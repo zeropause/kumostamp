@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Delegated (user accepted the recommendation): a Manifest V3 browser extension in vanilla JS (no build step) plus a static HTML/CSS/JS website. No backend. The extension stores progress in `chrome.storage.local` and bridges it to the website through a content script injected on the website's origin (localhost / file served pages), with `localStorage` as the website's fallback store and JSON import/export.
+A Manifest V3 browser extension in vanilla JS (no build step), a React + Vite + TypeScript website, and a small Hono API on Cloudflare Workers with D1. The extension stores progress in `chrome.storage.local` and bridges it to the website through a content script on trusted origins (localhost, file pages, or the Library address set in the popup), with `localStorage` as the website's fallback store and JSON import/export. The API handles MyAnimeList sign-in, library sync between browsers, and MyAnimeList list updates.
 
 ## Users
 
@@ -33,8 +33,8 @@ Progress belongs to the show, not the site. Every provider keeps its own resume 
 
 - Detection of title/episode is heuristic; manual correction is a core flow, not an edge case.
 - Cross-origin iframes: extension content scripts run with `all_frames`, so most embedded players are reachable.
-- Manual add: the website searches Jikan (MyAnimeList, anime) and TVmaze (TV series) to create or link a series, pulling synopsis, poster, episode count, status; a refresh action re-fetches the latest description.
-- No accounts, no cloud sync (undecided for later).
+- Manual add: the website searches AniList (anime), TVmaze (TV series), and IMDb via Cinemeta (films) to create or link a series, pulling synopsis, poster, episode count, status; a refresh action re-fetches the latest description.
+- Accounts are optional: signing in with MyAnimeList syncs the library between browsers and updates the user's MAL list. Everything still works signed out.
 
 ## Evidence on Hand
 

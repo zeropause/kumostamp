@@ -1,5 +1,5 @@
 /*
- * Kumostamp catalog — shared by the extension (background worker) and the website.
+ * Kumostamp catalog, shared by the extension (background worker) and the website.
  * Keep this file identical in extension/lib and web/src/lib (run
  * `node scripts/sync-shared.mjs` after editing).
  *
@@ -431,7 +431,7 @@
 
   /**
    * signals: { title, film, episode, duration (seconds), host, lang, netflixId }
-   * Returns { best, alternatives, confident } — best is a complete meta (with
+   * Returns { best, alternatives, confident }; best is a complete meta (with
    * cross-catalog `ids` when known) or null. Throws when every catalog failed
    * to answer (so callers retry soon instead of recording a miss).
    *

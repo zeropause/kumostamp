@@ -149,7 +149,7 @@ export function SeriesPage() {
           </div>
           <div className="fr-cell">
             <span className="cell-label">Runtime</span>
-            <span className="fr-value">{runtimeMin ? `${runtimeMin} min` : "—"}</span>
+            <span className="fr-value">{runtimeMin ? `${runtimeMin} min` : "Unknown"}</span>
           </div>
           <div className="fr-cell fr-wide">
             <span className="cell-label">Episode list</span>

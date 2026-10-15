@@ -1,5 +1,5 @@
 /*
- * Kumostamp core — shared by the extension (background, content, popup)
+ * Kumostamp core, shared by the extension (background, content, popup)
  * and the website. Keep this file identical in extension/lib and web/js
  * (run `node scripts/sync-shared.mjs` after editing).
  */
@@ -260,7 +260,7 @@
 
   /**
    * Apply one mutation. Returns the same (mutated) db.
-   * Every writer — background worker or website fallback — goes through here.
+   * Every writer (background worker or website fallback) goes through here.
    */
   function applyOp(db, op, now) {
     now = now || Date.now();

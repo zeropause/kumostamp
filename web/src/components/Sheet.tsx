@@ -447,7 +447,7 @@ export function AddMarkRow({ series, suggestedEp, open, onOpen, onClose, default
         >
           <label className="am-field am-ep">
             <span>Ep</span>
-            <input ref={firstRef} name="ep" inputMode="numeric" defaultValue={suggestedEp != null ? String(suggestedEp) : ""} placeholder="—" />
+            <input ref={firstRef} name="ep" inputMode="numeric" defaultValue={suggestedEp != null ? String(suggestedEp) : ""} placeholder="Film" />
           </label>
           <label className="am-field am-t">
             <span>Stopped at</span>
