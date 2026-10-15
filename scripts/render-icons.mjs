@@ -20,12 +20,11 @@ if (!browser) throw new Error("No Chromium browser found. Set BROWSER=/path/to/c
 const tile = (size) => `<!doctype html><html style="overflow:hidden"><body style="margin:0;overflow:hidden;background:transparent">
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64" style="display:block">
   <rect x="1" y="1" width="62" height="62" rx="12" fill="#eef1ea" stroke="#3d8fa8" stroke-width="2"/>
-  <g transform="translate(6.4 6.4) scale(0.8) translate(2 0)">
-    <rect x="6" y="6" width="13" height="52" fill="#1b1f1d"/>
-    <line x1="19" y1="32" x2="39.7" y2="14.67" stroke="#1b1f1d" stroke-width="10"/>
-    <line x1="19" y1="32" x2="39.7" y2="49.33" stroke="#d23a2c" stroke-width="10"/>
-    <path d="M42.42 5.99A35 35 0 0 1 42.42 58.01" fill="none" stroke="#1b1f1d" stroke-width="4"/>
-    <line x1="47" y1="32" x2="52" y2="32" stroke="#1b1f1d" stroke-width="3"/>
+  <g transform="translate(6.4 6.4) scale(0.8)">
+    <path d="M8 6h14v52H8z" fill="#1b1f1d"/>
+    <path d="M22 22 38 6h18L30 32h-8z" fill="#1b1f1d"/>
+    <path d="M22 32h8l16 16 4.5 13.5L37 57 22 42z" fill="#d23a2c"/>
+    <path d="M49.15 57.45 50.5 61.5l-4.05-1.35z" fill="#1b1f1d"/>
   </g>
 </svg></body></html>`;
 

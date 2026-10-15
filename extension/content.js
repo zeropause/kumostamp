@@ -278,7 +278,7 @@
       </style>
       <div class="slip" role="dialog" aria-label="Kumostamp resume">
         <div class="body">
-          <div class="title"><svg class="mark" viewBox="-2 0 64 64" aria-hidden="true"><rect x="6" y="6" width="13" height="52" fill="#1b1f1d"/><line x1="19" y1="32" x2="39.7" y2="14.67" stroke="#1b1f1d" stroke-width="10"/><line x1="19" y1="32" x2="39.7" y2="49.33" stroke="#d23a2c" stroke-width="10"/><path d="M42.42 5.99A35 35 0 0 1 42.42 58.01" fill="none" stroke="#1b1f1d" stroke-width="4"/><line x1="47" y1="32" x2="52" y2="32" stroke="#1b1f1d" stroke-width="3"/></svg><span class="name"></span><span class="ep">${ep.toUpperCase()}</span></div>
+          <div class="title"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 6h14v52H8z" fill="#1b1f1d"/><path d="M22 22 38 6h18L30 32h-8z" fill="#1b1f1d"/><path d="M22 32h8l16 16 4.5 13.5L37 57 22 42z" fill="#d23a2c"/><path d="M49.15 57.45 50.5 61.5l-4.05-1.35z" fill="#1b1f1d"/></svg><span class="name"></span><span class="ep">${ep.toUpperCase()}</span></div>
           <div class="where">${r.synced ? "Synced to" : "Your mark is at"} <span class="time">${KS.formatTime(r.time)}</span>${elsewhere ? ` from ${escapeHtml(r.host)}` : ""}</div>
           <div class="ruler" aria-hidden="true"></div>
           ${r.alt ? `<div class="alt"><span>Also <span class="time">${KS.formatTime(r.alt.time)}</span> on <span class="alt-host"></span></span><button class="use" type="button">Use ${KS.formatTime(r.alt.time)} instead</button></div>` : ""}

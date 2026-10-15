@@ -496,6 +496,7 @@ tr.is-unassigned { background: color-mix(in srgb, var(--print) 45%, transparent)
 
 /* logo lockup in the title block */
 .wordmark-link { display: inline-flex; align-items: center; gap: 10px; }
+.logo-mark { stroke: none; } /* the global svg stroke is for line icons; the mark is filled */
 .wordmark-link .logo-mark { flex: none; width: 44px; height: 44px; color: var(--ink); }
 @media (max-width: 720px) { .wordmark-link .logo-mark { width: 34px; height: 34px; } }
 

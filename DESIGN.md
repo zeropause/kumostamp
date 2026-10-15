@@ -307,5 +307,5 @@ A floating slip on provider pages: paper, printed rule border, floating shadow, 
 
 ## Logo
 
-The mark is a K whose arm and leg are two clock hands swinging from the stem, inside a half dial (center at the K's joint, radius 35 on a 64 grid, one tick at 3 o'clock). The leg is always red pencil (`--red`); everything else is ink and follows `currentColor`. Sources: `web/public/logo.svg`, `web/src/components/Logo.tsx`. On browser toolbars it sits on a paper tile with a cyan rule so it reads on light and dark chrome. Never recolor the leg, never fill the dial, never set the wordmark in anything but Barlow Condensed 700.
+The mark is a K whose leg is the red pencil: the leg is sharpened to a point at 45° with a small graphite tip in ink, the same pencil that marks where you stopped on every ruler. Stem and arm are solid ink and follow `currentColor`; the leg is always red pencil (`--red`). All four parts are filled shapes on a 64 grid with no strokes, so the mark stays crisp at 16px, where the pencil tip reads as a clean diagonal cut. Sources: `web/public/logo.svg`, `web/src/components/Logo.tsx`. On browser toolbars it sits on a paper tile with a cyan rule so it reads on light and dark chrome. Never recolor the leg, never outline the mark, never set the wordmark in anything but Barlow Condensed 700.
 

@@ -145,7 +145,7 @@ Belum diukur: belum ada daftar situs uji atau tes otomatis. Yang sudah diketahui
 
 ## Logo
 
-Huruf K yang lengan dan kakinya adalah dua jarum jam, berayun dari batangnya di dalam setengah dial. Kakinya berwarna merah pensil: tempat kamu berhenti.
+Huruf K yang kakinya adalah pensil merah yang diraut, lengkap dengan ujung grafitnya: pensil yang sama dengan penanda tempat kamu berhenti di setiap ruler.
 
 - `web/public/logo.svg`: logo utama, tinta di atas terang.
 - `web/public/favicon.svg`: favicon, ikut mode gelap.

@@ -233,5 +233,5 @@ svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width:
 
 /* logo lockup */
 .brand-lockup { display: inline-flex; align-items: center; gap: 7px; }
-.brand-mark { flex: none; width: 26px; height: 26px; color: var(--ink); }
+.brand-mark { flex: none; width: 26px; height: 26px; color: var(--ink); stroke: none; }
 .account [hidden], .account-row[hidden], .switch[hidden] { display: none; }

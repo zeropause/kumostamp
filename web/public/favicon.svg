@@ -1,15 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <style>
-    .ink { fill: #1b1f1d; stroke: #1b1f1d; }
-    .red { stroke: #d23a2c; }
+    .ink { fill: #1b1f1d; }
+    .red { fill: #d23a2c; }
     @media (prefers-color-scheme: dark) {
-      .ink { fill: #e4ebe5; stroke: #e4ebe5; }
-      .red { stroke: #ff6a55; }
+      .ink { fill: #e4ebe5; }
+      .red { fill: #ff6a55; }
     }
   </style>
-  <rect class="ink" x="6" y="6" width="13" height="52" stroke="none"/>
-  <line class="ink" x1="19" y1="32" x2="39.7" y2="14.67" stroke-width="10"/>
-  <line class="red" x1="19" y1="32" x2="39.7" y2="49.33" stroke-width="10"/>
-  <path class="ink" d="M42.42 5.99A35 35 0 0 1 42.42 58.01" fill="none" stroke-width="4"/>
-  <line class="ink" x1="47" y1="32" x2="52" y2="32" stroke-width="3"/>
+  <path class="ink" d="M8 6h14v52H8z"/>
+  <path class="ink" d="M22 22 38 6h18L30 32h-8z"/>
+  <path class="red" d="M22 32h8l16 16 4.5 13.5L37 57 22 42z"/>
+  <path class="ink" d="M49.15 57.45 50.5 61.5l-4.05-1.35z"/>
 </svg>
