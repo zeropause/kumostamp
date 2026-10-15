@@ -71,7 +71,7 @@
 
   /* ---------------- AniList ---------------- */
 
-  const ANILIST_FIELDS = `id siteUrl title { romaji english native } coverImage { large extraLarge }
+  const ANILIST_FIELDS = `id idMal siteUrl title { romaji english native } coverImage { large extraLarge }
     description(asHtml: false) episodes duration seasonYear status format averageScore genres synonyms`;
 
   const ANILIST_STATUS = {
@@ -83,6 +83,7 @@
     return {
       source: "anilist",
       id: m.id,
+      malId: m.idMal || null, // the server can't ask AniList (it blocks Cloudflare), so MAL sync reads this
       title: english || m.title.romaji,
       altTitle: english && m.title.romaji !== english ? m.title.romaji : m.title.native || "",
       image: (m.coverImage && (m.coverImage.extraLarge || m.coverImage.large)) || "",

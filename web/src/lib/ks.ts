@@ -42,6 +42,7 @@ export interface Meta {
   autoLinked?: boolean;
   chosen?: boolean; // picked by the user
   url?: string;
+  malId?: number | null; // MyAnimeList id of an AniList entry (null: none)
   fetchedAt?: number;
 }
 

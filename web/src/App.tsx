@@ -6,6 +6,7 @@ import { details, RETIRED } from "./lib/catalog";
 import { needsInfo, runAutoLink } from "./lib/autolink";
 import { getDb, op, useStore } from "./lib/store";
 import { Library } from "./routes/Library";
+import { ExtensionConnect } from "./routes/ExtensionConnect";
 import { Login } from "./routes/Login";
 import { SeriesPage } from "./routes/SeriesPage";
 
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/" element={<Library />} />
         <Route path="/series/:key" element={<SeriesPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/extension/connect" element={<ExtensionConnect />} />
         <Route path="*" element={<Library />} />
       </Routes>
     </>

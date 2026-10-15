@@ -52,6 +52,19 @@
       <summary>Connected accounts</summary>
       <div class="account">
         <div class="account-row">
+          <span class="account-name">Kumostamp</span>
+          <span class="account-state" id="cloud-state" aria-live="polite"></span>
+          <button type="button" class="btn btn-quiet" id="cloud-sync-now" hidden>Sync</button>
+          <button type="button" class="btn btn-quiet" id="cloud-action">Connect</button>
+        </div>
+        <p class="account-error" id="cloud-error" role="alert" hidden></p>
+        <p class="account-hint" id="cloud-hint" hidden>
+          Keeps your marks in your account, merged with every browser you connect, even while the library page is closed. Uses your Library address:
+          <code id="cloud-base"></code>
+        </p>
+      </div>
+      <div class="account">
+        <div class="account-row">
           <span class="account-name">AniList</span>
           <span class="account-state" id="anilist-state" aria-live="polite"></span>
           <button type="button" class="btn btn-quiet" id="anilist-action">Connect</button>

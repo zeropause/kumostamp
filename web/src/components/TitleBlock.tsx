@@ -3,7 +3,7 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "../lib/account";
 import { useStore, op } from "../lib/store";
-import { syncNow, useSync } from "../lib/sync";
+import { getMalNote, syncNow, useSync } from "../lib/sync";
 import type { Db } from "../lib/ks";
 import { Icon } from "./Icon";
 import { LogoMark } from "./Logo";
@@ -78,7 +78,7 @@ export function TitleBlock() {
         {sync.status !== "off" && (
           <span className="sync-state" data-state={sync.status} role="status">
             {sync.status === "syncing" ? "Syncing with your account…"
-            : sync.status === "synced" ? "Synced with your account"
+            : sync.status === "synced" ? getMalNote() || "Synced with your account"
             : (
               <>
                 {sync.message}{" "}

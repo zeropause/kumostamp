@@ -43,6 +43,26 @@ export async function currentUser<E extends { Bindings: Env }>(ctx: Context<E>):
   return row ? { id: row.id, malUserId: row.mal_user_id, name: row.mal_name, picture: row.mal_picture } : null;
 }
 
+/** The extension's device token (Authorization: Bearer kst_...), from /api/extension/token. */
+export async function deviceUser<E extends { Bindings: Env }>(ctx: Context<E>): Promise<User | null> {
+  const c = asCtx(ctx);
+  const auth = c.req.header("Authorization") || "";
+  if (!auth.startsWith("Bearer kst_")) return null;
+  const hash = await sha256(auth.slice(7));
+  const row = await c.env.DB.prepare(
+    `SELECT u.id, u.mal_user_id, u.mal_name, u.mal_picture FROM device_tokens d JOIN users u ON u.id = d.user_id WHERE d.token_hash = ?`,
+  )
+    .bind(hash)
+    .first<{ id: string; mal_user_id: number; mal_name: string; mal_picture: string | null }>();
+  if (!row) return null;
+  const now = Date.now();
+  // Coarse "last used", so a sync every minute isn't also a write every minute.
+  await c.env.DB.prepare("UPDATE device_tokens SET last_used_at = ? WHERE token_hash = ? AND (last_used_at IS NULL OR last_used_at < ?)")
+    .bind(now, hash, now - 3600_000)
+    .run();
+  return { id: row.id, malUserId: row.mal_user_id, name: row.mal_name, picture: row.mal_picture };
+}
+
 export async function endSession<E extends { Bindings: Env }>(ctx: Context<E>) {
   const c = asCtx(ctx);
   const value = getCookie(c, COOKIE);

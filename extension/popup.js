@@ -466,6 +466,55 @@
     }
   });
 
+  /* ---------------- Kumostamp account (sync) ---------------- */
+
+  let cloud = null;
+
+  function renderCloud() {
+    if (!cloud) return;
+    const on = cloud.connected;
+    $("#cloud-state").textContent = !on ? "Not connected"
+      : cloud.expired ? "Connection ended"
+      : `${cloud.user && cloud.user.name ? cloud.user.name : "Connected"} · ${cloud.lastSyncAt ? `synced ${KS.relTime(cloud.lastSyncAt)}` : "not synced yet"}`;
+    $("#cloud-action").textContent = !on ? "Connect" : cloud.expired ? "Reconnect" : "Disconnect";
+    $("#cloud-sync-now").hidden = !on || cloud.expired;
+    $("#cloud-hint").hidden = on;
+    $("#cloud-base").textContent = cloud.base || "Set the Library address below first.";
+    cloudError(on && cloud.error ? cloud.error : "");
+  }
+
+  function cloudError(text) {
+    const p = $("#cloud-error");
+    p.textContent = text || "";
+    p.hidden = !text;
+  }
+
+  async function loadCloud() {
+    cloud = (await send({ type: "cloudStatus" })).cloud;
+    renderCloud();
+  }
+
+  async function cloudCall(btn, msg) {
+    cloudError("");
+    btn.disabled = true;
+    try {
+      const r = await send(msg);
+      if (r.error) cloudError(r.error);
+      else cloud = r.cloud;
+    } finally {
+      btn.disabled = false;
+      if (cloud && !$("#cloud-error").textContent) renderCloud();
+    }
+  }
+
+  $("#cloud-action").addEventListener("click", (e) => {
+    const reconnect = cloud && cloud.connected && cloud.expired;
+    const msg = cloud && cloud.connected && !reconnect ? { type: "cloudDisconnect" } : { type: "cloudConnect" };
+    cloudCall(e.currentTarget, msg);
+  });
+
+  $("#cloud-sync-now").addEventListener("click", (e) => cloudCall(e.currentTarget, { type: "cloudSyncNow" }));
+
   $("#anilist-setup").addEventListener("submit", async (e) => {
     e.preventDefault();
     accountError("");
@@ -481,6 +530,7 @@
   renderMarks();
   renderSettings();
   loadAccounts();
+  loadCloud();
   refreshTimer = setInterval(refresh, 2000);
   window.addEventListener("unload", () => clearInterval(refreshTimer));
 })();

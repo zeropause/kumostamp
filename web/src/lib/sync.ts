@@ -9,6 +9,14 @@ import { getAccount, loadAccount, subscribeAccount } from "./account";
 import { KS, type Db } from "./ks";
 import { getDb, getMode, op, subscribe } from "./store";
 
+interface MalResult {
+  title: string;
+  progress?: number;
+  total?: number;
+  outcome: "updated" | "skipped" | "failed";
+  reason?: string;
+}
+
 export type SyncState =
   | { status: "off" }
   | { status: "syncing" }
@@ -19,6 +27,8 @@ const PUSH_DELAY_MS = 2000;
 const PULL_EVERY_MS = 60_000;
 
 let state: SyncState = { status: "off" };
+/** The last thing sent to (or refused by) MyAnimeList, for the header. */
+let malNote = "";
 const listeners = new Set<() => void>();
 let server: { db: Db; rev: number } | null = null;
 let active = false;
@@ -28,6 +38,7 @@ let pullTimer: ReturnType<typeof setInterval> | undefined;
 
 function set(next: SyncState) {
   state = next;
+  if (next.status === "off") malNote = "";
   listeners.forEach((fn) => fn());
 }
 
@@ -63,6 +74,39 @@ async function pull() {
   await adopt();
 }
 
+/** AniList blocks the server, so this browser looks up MAL ids for sheets linked before `malId` existed. */
+async function fillMalIds() {
+  const todo = Object.values(getDb().series).filter((s) => s.meta?.source === "anilist" && s.meta.malId === undefined).slice(0, 50);
+  if (!todo.length) return;
+  const res = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: "query ($ids: [Int]) { Page(perPage: 50) { media(id_in: $ids, type: ANIME) { id idMal } } }",
+      variables: { ids: todo.map((s) => Number(s.meta!.id)) },
+    }),
+  }).catch(() => null);
+  if (!res?.ok) return; // try again next visit
+  const json = (await res.json()) as { data?: { Page?: { media?: { id: number; idMal: number | null }[] } } };
+  for (const m of json.data?.Page?.media || []) {
+    for (const s of todo) if (Number(s.meta!.id) === m.id) await op({ type: "upsertSeries", key: s.key, meta: { malId: m.idMal || null } });
+  }
+}
+
+/** Put recent watching on the MyAnimeList list (the server skips what it already sent). */
+async function malSync() {
+  await fillMalIds();
+  await push();
+  const { results } = await api<{ results: MalResult[] }>("/api/library/mal-sync", { method: "POST", body: "{}" });
+  const updated = results.filter((r) => r.outcome === "updated");
+  const failed = results.find((r) => r.outcome === "failed");
+  if (updated.length) {
+    malNote = `MyAnimeList: ${updated.map((r) => `${r.title} → ${r.progress}${r.total ? `/${r.total}` : ""}`).join(", ")}`;
+  } else if (failed) {
+    malNote = `MyAnimeList: ${failed.title} not updated (${failed.reason})`;
+  }
+}
+
 async function push() {
   const local = getDb();
   if (server && !adds(server.db, local)) return;
@@ -95,6 +139,7 @@ function begin() {
   run(async () => {
     await pull();
     await push();
+    await malSync();
   });
   pullTimer = setInterval(pullSoon, PULL_EVERY_MS);
   window.addEventListener("focus", pullSoon);
@@ -134,7 +179,12 @@ export function syncNow() {
   return run(async () => {
     await pull();
     await push();
+    await malSync();
   });
+}
+
+export function getMalNote() {
+  return malNote;
 }
 
 export function useSync(): SyncState {

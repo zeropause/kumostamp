@@ -26,7 +26,7 @@ npm run dev
 Lalu buka http://localhost:5173. Port harus tetap 5173 di localhost agar extension bisa terhubung. Dev server yang sama juga menjalankan API (`/api/*`) dan database D1 lokal.
 
 **Backend (sekali saja):**
-1. `npm run db:migrate` membuat tabel di D1 lokal.
+1. `npm run db:migrate` membuat tabel di D1 lokal. Jalankan lagi setiap ada file baru di `web/migrations/`.
 2. Salin `.dev.vars.example` ke `.dev.vars`, lalu isi `TOKEN_KEY` (perintah pembuatnya ada di file itu).
 3. Untuk login MyAnimeList: buat client di https://myanimelist.net/apiconfig (App Type: **web**), daftarkan redirect URL `http://localhost:5173/api/auth/mal/callback`, lalu isi `MAL_CLIENT_ID` dan `MAL_CLIENT_SECRET` di `.dev.vars`.
 
@@ -124,8 +124,16 @@ Hanya deteksi yang yakin (atau koreksi kamu) yang disimpan otomatis. Halaman nav
 - **Penggabungannya sama seperti import:** mark terbaru menang per episode, mark per situs digabung, dan info katalog yang lebih baru serta judul yang diganti manual ikut menang.
 - **Hapus tetap terhapus.** Penghapusan series atau episode dicatat beserta waktunya (`removed` di database), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali. *Undo* hapus juga ikut tersinkron.
 - **Kapan sinkron:** sekitar 2 detik setelah ada perubahan, saat tab kembali aktif, dan setiap menit selama tab terbuka. Status ada di header (*Synced with your account*).
-- **Untuk sekarang website yang menjembatani**, jadi mark dari extension baru naik ke server saat website dibuka. Extension yang sinkron sendiri menyusul.
+- **Extension bisa sinkron sendiri.** Di popup, *Connected accounts* → *Kumostamp* → **Connect** membuka halaman izin di library (alamatnya dari *Library address*). Setelah diizinkan, extension menyimpan *device token* (hanya di background worker, tidak pernah ke halaman web) dan sinkron tanpa website dibuka: mark baru naik paling lambat ~30 detik, mark dari browser lain ditarik tiap 2 menit dan saat browser dibuka. **Disconnect** mencabut token di server juga.
+- Tanpa extension terhubung, website tetap menjembatani: mark dari extension naik saat website dibuka.
 - Setelah update ini, **reload extension** di `chrome://extensions` supaya catatan hapus dan aturan penggabungan yang baru juga dipakai di extension.
+
+**Update list MyAnimeList.** Akun yang login dengan MyAnimeList ikut diperbarui otomatis oleh server, memakai token MAL milikmu:
+- Episode yang diputar minimal 1 menit (dalam 30 hari terakhir) membuat anime itu *Watching* di MAL dengan progres = nomor episode itu.
+- Progres tidak pernah diturunkan, entri *Completed* dan yang sedang *rewatching* tidak disentuh, dan Kumostamp tidak pernah menandai *Completed*.
+- Hanya series yang terhubung ke AniList atau MyAnimeList; ID MAL dari AniList dicari otomatis (`idMal`). Series dari TVmaze/IMDb dilewati, begitu juga nomor episode yang melebihi jumlah episode entri (season yang nomornya berlanjut).
+- Terjadi setiap kali library tersinkron ke server, dan sekali saat website dibuka. Hasilnya tampil di header, misalnya *MyAnimeList: Frieren → 3/28*.
+- Token MAL di-refresh otomatis sebelum kedaluwarsa.
 
 **Sinkron ke AniList.** Opsional, dihubungkan lewat popup (*Connected accounts*). Begitu sebuah episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di list AniList kamu (progres = episode yang sedang diputar). Selesai menonton tidak mengirim apa pun; status *Completed* di episode terakhir kamu set sendiri di AniList. Setiap pembaruan dan menampilkan kartu kecil *AniList updated · Dandadan 3/12* dengan tombol **Undo**.
 - **Hanya satu arah dan hanya naik.** Progres yang sudah di AniList tidak pernah diturunkan, dan entri yang sedang *Rewatching* tidak disentuh. Kumostamp tidak pernah menandai *Completed*.

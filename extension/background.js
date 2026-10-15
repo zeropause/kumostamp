@@ -1,5 +1,5 @@
 /* Kumostamp background worker: the single writer of the progress database. */
-importScripts("lib/core.js", "lib/catalog.js", "lib/accounts.js", "lib/anilist-sync.js");
+importScripts("lib/core.js", "lib/catalog.js", "lib/accounts.js", "lib/anilist-sync.js", "lib/cloud-sync.js");
 
 const DB_KEY = "ks:db";
 const SETTINGS_KEY = "ks:settings";
@@ -25,6 +25,7 @@ function mutate(op) {
   writeQueue = writeQueue.then(async () => {
     const db = KS.applyOp(await readDb(), op);
     await chrome.storage.local.set({ [DB_KEY]: db });
+    KSCloud.soon(op); // send it to the account shortly, if one is connected
     return db;
   });
   return writeQueue;
@@ -410,8 +411,8 @@ async function linkPending() {
   for (const s of Object.values(db.series)) if (needsInfo(s)) queueLink(s.key);
 }
 
-chrome.runtime.onInstalled.addListener(() => linkPending());
-chrome.runtime.onStartup.addListener(() => { linkPending(); KSAnilistSync.run(); });
+chrome.runtime.onInstalled.addListener(() => { linkPending(); KSCloud.wake(); });
+chrome.runtime.onStartup.addListener(() => { linkPending(); KSAnilistSync.run(); KSCloud.wake(); });
 
 KSAnilistSync.init({
   readDb,
@@ -419,7 +420,12 @@ KSAnilistSync.init({
   // Tell the page that just finished the episode, so it can offer Undo.
   notify: (tabId, info) => { if (typeof tabId === "number") chrome.tabs.sendMessage(tabId, { type: "anilistSync", info }, { frameId: 0 }).catch(() => {}); },
 });
-chrome.alarms.onAlarm.addListener((a) => { if (a.name === KSAnilistSync.ALARM) KSAnilistSync.run(); });
+chrome.alarms.onAlarm.addListener((a) => {
+  if (a.name === KSAnilistSync.ALARM) KSAnilistSync.run();
+  KSCloud.onAlarm(a.name);
+});
+
+KSCloud.init({ readDb, mutate, getSettings });
 
 /* ---------- badge: a red dot while a mark is being kept ---------- */
 
@@ -658,6 +664,23 @@ async function handle(msg, sender) {
       await chrome.storage.local.set({ [SETTINGS_KEY]: next });
       return { accounts: await KSAccounts.status(next.anilistClientId), settings: next };
     }
+
+    case "cloudStatus":
+      return { cloud: await KSCloud.status() };
+
+    case "cloudConnect":
+      try {
+        return { cloud: await KSCloud.connect() };
+      } catch (e) {
+        return { error: String((e && e.message) || e) };
+      }
+
+    case "cloudDisconnect":
+      return { cloud: await KSCloud.disconnect() };
+
+    case "cloudSyncNow":
+      await KSCloud.sync().catch(() => {}); // the outcome shows in the status
+      return { cloud: await KSCloud.status() };
 
     case "setSettings": {
       const next = Object.assign(await getSettings(), msg.settings);

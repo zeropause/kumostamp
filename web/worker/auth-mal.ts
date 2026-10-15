@@ -12,6 +12,10 @@ const AUTHORIZE = "https://myanimelist.net/v1/oauth2/authorize";
 const TOKEN = "https://myanimelist.net/v1/oauth2/token";
 const ME = "https://api.myanimelist.net/v2/users/@me";
 const FLOW_COOKIE = "ks_mal_flow";
+const NEXT_COOKIE = "ks_mal_next";
+
+/** Only paths inside this app: "/x", never "//host" or "https://...". */
+const safeNext = (next: string | undefined) => (next && /^\/(?![/\\])/.test(next) ? next : "/");
 
 interface MalTokens {
   access_token: string;
@@ -37,6 +41,9 @@ auth.get("/mal/login", (c) => {
     sameSite: "Lax",
     maxAge: 600,
   });
+  const next = safeNext(c.req.query("next"));
+  if (next !== "/") setCookie(c, NEXT_COOKIE, next, { path: "/api/auth/mal", httpOnly: true, secure: secureCookies(c), sameSite: "Lax", maxAge: 600 });
+  else deleteCookie(c, NEXT_COOKIE, { path: "/api/auth/mal", secure: secureCookies(c) });
   const url = new URL(AUTHORIZE);
   url.search = new URLSearchParams({
     response_type: "code",
@@ -103,7 +110,9 @@ auth.get("/mal/callback", async (c) => {
   ]);
 
   await startSession(c, userId);
-  return c.redirect("/");
+  const next = safeNext(getCookie(c, NEXT_COOKIE));
+  deleteCookie(c, NEXT_COOKIE, { path: "/api/auth/mal", secure: secureCookies(c) });
+  return c.redirect(next);
 });
 
 auth.post("/logout", async (c) => {
