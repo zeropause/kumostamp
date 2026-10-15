@@ -1,6 +1,6 @@
 /*
  * The ruler: the sheet's signature instrument. One tick per minute, a heavier
- * tick every five, the red pencil at the stop. Click or arrow keys move the mark.
+ * tick every five, the red pencil at the stop. Click or arrow keys move the mark, only where the caller passes onSet (a row in edit mode).
  */
 import { useRef, useState, type CSSProperties } from "react";
 import { KS } from "../lib/ks";

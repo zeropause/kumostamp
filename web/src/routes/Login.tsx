@@ -39,8 +39,9 @@ export function Login() {
           <>
             <h2 id="account-title">Sign in to keep your marks in one place</h2>
             <p className="account-lede">
-              Use your MyAnimeList account. Your marks are saved to it and merged with every browser you sign in on, so you never need to
-              export a file. The extension keeps working without signing in.
+              Use your MyAnimeList account. Kumostamp keeps a copy of your marks on its server and merges it with every browser you sign in
+              on, so you never need to export a file. Anime you start watching is set to Watching on your MyAnimeList list, with the episode you
+              reached. The extension keeps working without signing in.
             </p>
             {error && (
               <p className="account-error" role="alert">

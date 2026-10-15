@@ -26,6 +26,7 @@ export function AddPanel() {
   const seq = useRef(0);
   const panelRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const linkKey = addRequest?.linkKey || null;
   const linking = linkKey ? getDb().series[linkKey] : null;
 
@@ -61,7 +62,13 @@ export function AddPanel() {
 
   // Each open request resets the panel; a request with a query searches right away.
   useEffect(() => {
-    if (!addRequest) return;
+    if (!addRequest) {
+      // Closed: keyboard focus goes back to the button that opened the panel.
+      if (opener.current?.isConnected) opener.current.focus();
+      opener.current = null;
+      return;
+    }
+    opener.current ||= document.activeElement as HTMLElement | null;
     const src = addRequest.source || "anilist";
     setTab(src);
     setQuery(addRequest.query || "");

@@ -281,7 +281,15 @@ export function EpisodeRow({ series, epKey, ep, catalogTitle, defaultDuration }:
           duration={duration}
           finished={ep.finished}
           label={`${series.title} ${name}`}
-          onSet={(sec) => run({ type: "setEpisode", key: series.key, episode: ep.episode, time: sec, duration }, `${name} mark moved to ${KS.formatTime(sec)}.`)}
+          // Only while editing: a stray click on the ruler must not move the mark.
+          onSet={
+            editing
+              ? (sec) => {
+                  setEditing(false);
+                  run({ type: "setEpisode", key: series.key, episode: ep.episode, time: sec, duration }, `${name} mark moved to ${KS.formatTime(sec)}.`);
+                }
+              : undefined
+          }
         />
       </td>
       <td className="c-time">

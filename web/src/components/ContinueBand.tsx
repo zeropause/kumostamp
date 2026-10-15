@@ -6,7 +6,7 @@ import { Ruler } from "./Ruler";
 import { useUi } from "./ui";
 
 export function ContinueBand({ db }: { db: Db }) {
-  const { run, copy } = useUi();
+  const { copy } = useUi();
   const rows = KS.recent(db);
   const pick = rows.find((r) => !r.episode.finished) || rows[0];
   if (!pick) return null;
@@ -63,7 +63,6 @@ export function ContinueBand({ db }: { db: Db }) {
         finished={ep.finished}
         size="xl"
         label={`${series.title} ${epName(ep.episode)}`}
-        onSet={(sec) => run({ type: "setEpisode", key: series.key, episode: ep.episode, time: sec }, `Moved the mark to ${KS.formatTime(sec)}.`)}
       />
     </section>
   );

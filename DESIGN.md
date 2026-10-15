@@ -155,7 +155,7 @@ Density is that of a working form, not a showcase. Everything sits in square box
 The night sheet is the same form re-printed in phosphor cyan on blue-black stock. It appears only when the OS asks for dark, for the library or popup opened beside a playing video at night. Paper stays the canonical ground; the night sheet keeps every rule, cell and pencil role. The world refuses the streaming-app grid of poster cards on a dark ground.
 
 **Key Characteristics:**
-- Pale green-grey sheet paper, never cream, ruled in cyan on a 24px pitch.
+- Pale green-grey sheet paper, never cream, printed as cyan layout paper: a 24px cell grid, a firmer line every 5 cells, fading out down the first screen.
 - Cyan print fill marks what the form printed: title-block cells and table heads.
 - Two pencils carry meaning: red for the stop, blue for finished.
 - Square boxed cells everywhere; no rounded cards.
@@ -175,7 +175,7 @@ Printed stationery: a cool paper ground, one family of cyan print, near-black in
 ### Tertiary
 - **Print Cyan** (`print-cyan`): The form's printed fill. Title-block header, table heads, the selected segment, poster placeholders, the sample note.
 - **Printed Rule** (`rule-printed`): Cell borders, button and input strokes, heavy 5-minute ruler ticks, 2px section dividers.
-- **Hairline Rule** (`rule-hairline`): Row rules in tables, the page's background ruling (mixed to 55% on the web), minute ticks.
+- **Hairline Rule** (`rule-hairline`): Row rules in tables, the web page's layout-paper grid, minute ticks.
 - **Rule Ink** (`rule-ink`): Text printed by the form: labels on print fill, meta lines, the episode count, link-like actions.
 
 ### Neutral
@@ -219,7 +219,7 @@ The `night-*` tokens replace their daylight counterparts under `prefers-color-sc
 
 ## Layout
 
-The page is ruled on a 24px row pitch (`spacing.row`): a repeating hairline gradient behind everything, and the unit for vertical gaps between sheets (2 rows) and empty-state padding (3 rows). Content sits in a 1240px column with a fluid gutter of clamp(16px, 3vw, 32px).
+The page is printed as layout paper on `body::before`: a 1px cell line every row (`--rule` at 30%) and a firmer line every 5 rows (`--rule` at 65%), masked to fade to nothing over the first 900px like worn print. The 24px row pitch (`spacing.row`) is the unit for vertical gaps between sheets (2 rows) and empty-state padding (3 rows). Content sits in a 1240px column with a fluid gutter of clamp(16px, 3vw, 32px).
 
 Top to bottom: a full-bleed printed title block (series name cell, two numeric count cells, source cell, actions), then the Continue band as one row of boxed cells (series, episode, stop time with XL ruler, actions), then the toolbar (filter + segmented control), then the stack of series sheets. Each sheet has a head (poster, title, meta, synopsis, tools) above an episode table with columns Ep, Ruler (42%), Stopped at, Providers, Actions.
 

@@ -19,7 +19,7 @@ const STEPS: { title: string; body: string; pos: number; sync?: boolean }[] = [
     pos: 0.32,
   },
   {
-    title: "Your stop point is marked",
+    title: "Kumostamp marks where you stop",
     body: "On every pause, and every few seconds while you watch. Each episode keeps the minute you reached, and which site you were on.",
     pos: 0.77,
   },
@@ -45,7 +45,7 @@ export function Landing({ mode, onSample }: Props) {
             <span className="landing-line">Resume at <span className="landing-time">18:24</span> on the next.</span>
           </h2>
           <p className="landing-lede">
-            Kumostamp keeps the minute you stopped in every anime, series and movie, and carries it to whichever streaming site you open next.
+            Kumostamp saves the minute you stopped in every anime, series and movie. Open the same episode on another streaming site and the player starts from there.
           </p>
           <div className="landing-actions">
             {local && (
@@ -131,7 +131,7 @@ export function Landing({ mode, onSample }: Props) {
         </div>
         <div>
           <dt>Your data</dt>
-          <dd>Stays in your browser. No account, no server. Export and import as JSON whenever you like.</dd>
+          <dd>Stays in your browser unless you sign in with MyAnimeList, which keeps a copy on the Kumostamp server so your other browsers get it. Export and import as JSON whenever you like.</dd>
         </div>
       </dl>
 
