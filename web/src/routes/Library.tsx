@@ -126,10 +126,14 @@ function Segmented<T extends string>({ label, value, options, onChange }: { labe
   );
 }
 
+const SHEET_ROWS = 5; // newest marks a library card shows before "Show earlier"
+
 /** Compact sheet: the marks you have, the next episode, and a hand-mark row. */
 function LibrarySheet({ series }: { series: Series }) {
   const [adding, setAdding] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const entries = sortedEpisodes(series);
+  const hidden = showAll ? 0 : Math.max(0, entries.length - SHEET_ROWS);
   const numbered = entries.filter(([k]) => k !== KS.FILM).map(([k]) => Number(k));
   const maxEp = numbered.length ? Math.max(...numbered) : 0;
   const total = series.meta?.episodes;
@@ -157,7 +161,16 @@ function LibrarySheet({ series }: { series: Series }) {
         <table className="ep-table">
           <EpisodeTableHead />
           <tbody>
-            {entries.map(([k, ep]) => (
+            {entries.length > SHEET_ROWS && (
+              <tr>
+                <td colSpan={5}>
+                  <button className="btn btn-quiet" type="button" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
+                    {showAll ? "Show fewer" : `Show ${hidden} earlier`}
+                  </button>
+                </td>
+              </tr>
+            )}
+            {entries.slice(hidden).map(([k, ep]) => (
               <EpisodeRow key={k} series={series} epKey={k} ep={ep} />
             ))}
             {nextEp != null && entries.length > 0 && (

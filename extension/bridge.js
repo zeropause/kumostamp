@@ -45,8 +45,13 @@
       if (type === "hello") return trusted ? pushDb() : checkTrust();
       if (type === "op") {
         if (!trusted) return post({ type: "ack", id, error: "This address isn't your Kumostamp library yet. Allow it in the extension popup." });
-        const res = await chrome.runtime.sendMessage({ type: "op", op: e.data.op });
-        post({ type: "ack", id, error: res && res.error });
+        try {
+          const res = await chrome.runtime.sendMessage({ type: "op", op: e.data.op });
+          post({ type: "ack", id, error: res && res.error });
+        } catch (err) {
+          // Usually the extension was reloaded or updated under this page: its link to the page is gone.
+          post({ type: "ack", id, error: /context invalidated/i.test(String(err && err.message)) ? "Kumostamp was updated. Reload this page and try again." : String((err && err.message) || err) });
+        }
       }
     });
 
