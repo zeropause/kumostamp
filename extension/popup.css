@@ -192,8 +192,6 @@ svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width:
 .account-error { margin: 0; color: var(--red-ink); }
 .account-hint { margin: 0; color: var(--ink-2); font-size: 13px; }
 .account-hint code { display: block; margin-top: 4px; font: 12px var(--font-time); word-break: break-all; user-select: all; }
-#anilist-setup { display: flex; gap: 6px; }
-#anilist-setup input { flex: 1; min-width: 0; font: 13px var(--font-time); padding: 4px 6px; border: 1px solid var(--rule-strong); background: var(--paper); color: var(--ink); }
 .settings form { display: flex; gap: 6px; margin-top: 6px; }
 .settings input { flex: 1; min-width: 0; font: 13px var(--font-time); padding: 4px 6px; border: 1px solid var(--rule-strong); background: var(--paper); color: var(--ink); }
 

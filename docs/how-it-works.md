@@ -94,11 +94,12 @@ Server memperbarui list MAL memakai token MAL milikmu, setiap kali library tersi
 
 ## List AniList
 
-Opsional, dihubungkan lewat popup (*Connected accounts*), memakai Client ID AniList milikmu sendiri. Begitu episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di AniList dan menampilkan kartu *AniList updated · Dandadan 3/12* dengan tombol Undo.
+Opsional. Tekan *Login* di popup (*Connected accounts*) atau buka halaman `/login` website, lalu pilih *Sign in with AniList*. Tidak perlu Client ID sendiri; website memakai client AniList milik Kumostamp. AniList di sini bukan akun Kumostamp: ia hanya meng-update list AniList, tanpa sync library. Begitu episode diputar sekitar 1 menit, Kumostamp menandainya *Watching* di AniList dan menampilkan kartu *AniList updated · Dandadan 3/12* dengan tombol Undo.
 
 - Satu arah dan hanya naik; entri *Rewatching* tidak disentuh, *Completed* kamu set sendiri.
-- Gagal karena jaringan dicoba lagi otomatis (antrean di `chrome.storage.local`). Kalau login kedaluwarsa, popup menampilkan Reconnect.
-- Token hanya di extension, tidak ikut export dan tidak pernah dikirim ke website.
+- Gagal karena jaringan dicoba lagi otomatis (antrean di `chrome.storage.local`). Kalau login kedaluwarsa, popup menampilkan *Login expired*; tekan Login untuk masuk lagi.
+- AniList mengembalikan token ke halaman `/login` (implicit grant, di URL fragment). Website langsung menghapusnya dari URL lalu menyerahkannya ke extension lewat bridge, hanya kalau alamat website dipercaya extension. Extension mengecek token ke AniList sebelum menyimpannya. Server tidak pernah melihat token ini.
+- Kalau extension belum terhubung, token menunggu di `localStorage` website paling lama 1 jam, lalu dibuang.
 
 ## Info katalog
 

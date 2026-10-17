@@ -8,7 +8,7 @@ const PENDING_MS = 5000; // after new media loads, hold saves this long for the 
 const START_AFTER = 60; // seconds of playback before AniList is told you are watching it
 const MIN_SAVE_TIME = 5; // seconds into a video before it counts as watched
 
-const DEFAULT_SETTINGS = { libraryUrl: "http://localhost:5173/", resumeChip: true, autoSave: true, autoResume: true, anilistClientId: "", anilistSync: false };
+const DEFAULT_SETTINGS = { libraryUrl: "http://localhost:5173/", resumeChip: true, autoSave: true, autoResume: true, anilistSync: false };
 const SYNC_SLACK = 20; // seconds: closer than this to the mark counts as caught up
 
 /* ---------- storage ---------- */
@@ -632,19 +632,21 @@ async function handle(msg, sender) {
       return { settings: await getSettings() };
 
     case "accountStatus":
-      return { accounts: await KSAccounts.status((await getSettings()).anilistClientId) };
+      return { accounts: await KSAccounts.status() };
 
-    case "accountConnect": {
-      if (msg.provider !== "anilist") return { error: "Unsupported account." };
-      try {
-        await KSAccounts.connectAnilist((await getSettings()).anilistClientId);
-      } catch (e) {
-        return { error: String((e && e.message) || e) };
+    case "anilistFromWeb": {
+      // The library's login page (through the bridge, trusted origins only): hand over a token, or just ask who is connected.
+      if (msg.token) {
+        try {
+          await KSAccounts.saveAnilistToken(msg.token, msg.expiresIn);
+        } catch (e) {
+          return { error: String((e && e.message) || e) };
+        }
+        // Connecting is the opt-in; the switch in the popup turns it off again.
+        await chrome.storage.local.set({ [SETTINGS_KEY]: Object.assign(await getSettings(), { anilistSync: true }) });
       }
-      // Connecting is the opt-in; the switch in the popup turns it off again.
-      const next = Object.assign(await getSettings(), { anilistSync: true });
-      await chrome.storage.local.set({ [SETTINGS_KEY]: next });
-      return { accounts: await KSAccounts.status(next.anilistClientId), settings: next };
+      const a = (await KSAccounts.status()).anilist;
+      return { user: a ? a.user : null };
     }
 
     case "anilistUndo": {
@@ -662,7 +664,7 @@ async function handle(msg, sender) {
       await KSAccounts.disconnectAnilist();
       const next = Object.assign(await getSettings(), { anilistSync: false });
       await chrome.storage.local.set({ [SETTINGS_KEY]: next });
-      return { accounts: await KSAccounts.status(next.anilistClientId), settings: next };
+      return { accounts: await KSAccounts.status(), settings: next };
     }
 
     case "cloudStatus":
