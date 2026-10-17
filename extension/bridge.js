@@ -43,6 +43,17 @@
       if (e.source !== window || !e.data || e.data.source !== FROM_PAGE) return;
       const { type, id } = e.data;
       if (type === "hello") return trusted ? pushDb() : checkTrust();
+      if (type === "anilist") {
+        // The login page hands over an AniList token (or asks who is connected). Only your library may.
+        if (!trusted) return post({ type: "anilistAck", id, error: "This address isn't your Kumostamp library yet. Allow it in the extension popup." });
+        try {
+          const res = await chrome.runtime.sendMessage({ type: "anilistFromWeb", token: e.data.token, expiresIn: e.data.expiresIn });
+          post({ type: "anilistAck", id, user: res && res.user, error: res && res.error });
+        } catch (err) {
+          post({ type: "anilistAck", id, error: String((err && err.message) || err) });
+        }
+        return;
+      }
       if (type === "op") {
         if (!trusted) return post({ type: "ack", id, error: "This address isn't your Kumostamp library yet. Allow it in the extension popup." });
         try {

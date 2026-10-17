@@ -67,7 +67,7 @@
         <div class="account-row">
           <span class="account-name">AniList</span>
           <span class="account-state" id="anilist-state" aria-live="polite"></span>
-          <button type="button" class="btn btn-quiet" id="anilist-action">Connect</button>
+          <button type="button" class="btn btn-quiet" id="anilist-action">Login</button>
         </div>
         <label class="switch" id="anilist-sync-row" hidden>
           <input type="checkbox" id="anilist-sync">
@@ -79,13 +79,8 @@
           <button type="button" class="btn btn-quiet" id="anilist-undo">Undo</button>
         </div>
         <p class="account-error" id="anilist-error" role="alert" hidden></p>
-        <form id="anilist-setup" hidden>
-          <input id="anilist-client" inputmode="numeric" spellcheck="false" placeholder="AniList client ID" aria-label="AniList client ID">
-          <button type="submit" class="btn btn-quiet">Save</button>
-        </form>
         <p class="account-hint" id="anilist-hint" hidden>
-          Register an API client at anilist.co/settings/developer with this redirect URL:
-          <code id="anilist-redirect"></code>
+          Login opens your Kumostamp library, where you can sign in with MyAnimeList or AniList.
         </p>
       </div>
     </details>

@@ -28,6 +28,8 @@ Buka http://localhost:5173. Port harus 5173 supaya extension mau terhubung. Dev 
 
 Client MAL dibuat di https://myanimelist.net/apiconfig (App Type: web) dengan redirect URL `http://localhost:5173/api/auth/mal/callback`.
 
+Login AniList (opsional) butuh client di https://anilist.co/settings/developer dengan redirect URL `http://localhost:5173/login`. Salin `web/.env.example` ke `web/.env.local` dan isi `VITE_ANILIST_CLIENT_ID`. Produksi memakai redirect URL domainnya sendiri.
+
 ### Extension
 
 1. Buka `chrome://extensions` (atau `edge://extensions`) dan aktifkan Developer mode.
@@ -47,6 +49,8 @@ npm run deploy
 ```
 
 Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
+
+`VITE_ANILIST_CLIENT_ID` ditanam ke JavaScript saat build, bukan secret Worker: isi di `web/.env.production` sebelum `npm run deploy`, dan daftarkan `https://<domain>/login` sebagai redirect URL client AniList-nya.
 
 ## Cara kerja singkat
 
@@ -70,7 +74,7 @@ extension/
   popup.html/css/js
   lib/core.js          parsing judul + operasi data (sumber utama)
   lib/catalog.js       pencarian katalog dan skor kecocokan (sumber utama)
-  lib/accounts.js      login AniList
+  lib/accounts.js      token AniList (dari halaman login website)
   lib/anilist-sync.js  antrean update list AniList
   lib/cloud-sync.js    sinkron extension ke akun
 web/

@@ -398,16 +398,9 @@
   function renderAccounts() {
     if (!accounts) return;
     const a = accounts.anilist;
-    const hasId = accounts.hasClientId;
-    $("#anilist-state").textContent = a ? `Connected as ${a.user.name}` : accounts.anilistExpired ? "Login expired" : hasId ? "Not connected" : "Needs a client ID";
-    const action = $("#anilist-action");
-    action.textContent = a ? "Disconnect" : accounts.anilistExpired ? "Reconnect" : "Connect";
-    action.disabled = !a && !hasId;
-    // The client ID form and registration hint show until the account is connected.
-    $("#anilist-setup").hidden = !!a;
+    $("#anilist-state").textContent = a ? `Connected as ${a.user.name}` : accounts.anilistExpired ? "Login expired" : "Not connected";
+    $("#anilist-action").textContent = a ? "Disconnect" : "Login";
     $("#anilist-hint").hidden = !!a;
-    $("#anilist-redirect").textContent = accounts.redirectUrl;
-    if (!$("#anilist-client").value) $("#anilist-client").value = state.settings.anilistClientId || "";
     $("#anilist-sync-row").hidden = !a;
     $("#anilist-sync").checked = !!state.settings.anilistSync;
     renderLastPush();
@@ -448,13 +441,13 @@
   }
 
   $("#anilist-action").addEventListener("click", async (e) => {
+    // Logging in happens on the library's login page, which hands the token to this extension.
+    if (!accounts.anilist) return chrome.tabs.create({ url: new URL("login", state.settings.libraryUrl).href });
     const btn = e.currentTarget;
     accountError("");
     btn.disabled = true;
     try {
-      const r = accounts.anilist
-        ? await send({ type: "accountDisconnect" })
-        : await send({ type: "accountConnect", provider: "anilist" });
+      const r = await send({ type: "accountDisconnect" });
       if (r.error) accountError(r.error);
       else {
         accounts = r.accounts;
@@ -514,16 +507,6 @@
   });
 
   $("#cloud-sync-now").addEventListener("click", (e) => cloudCall(e.currentTarget, { type: "cloudSyncNow" }));
-
-  $("#anilist-setup").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    accountError("");
-    const id = $("#anilist-client").value.trim();
-    if (id && !/^\d+$/.test(id)) return accountError("The client ID is a number, like 12345.");
-    const r = await send({ type: "setSettings", settings: { anilistClientId: id } });
-    state.settings = r.settings;
-    await loadAccounts();
-  });
 
   renderNow();
   renderRecent();
