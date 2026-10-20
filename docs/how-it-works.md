@@ -54,7 +54,9 @@ Netflix bisa menampilkan judul terjemahan, misalnya "Hal-Hal Aneh" untuk Strange
 - Judul terjemahan dicari di Wikidata dalam bahasa halaman (`<html lang>`). Di halaman non-Inggris, label Wikidata yang persis sama dicek lebih dulu. Kalau Wikidata tidak menjawab, hasilnya ditandai *best guess*.
 - Untuk judul yang belum pernah dilihat, penyimpanan ditahan sampai 15 detik sambil identitasnya dicek.
 - Nomor episode dan season dikenali dalam banyak bahasa: "Tập 5", "ตอนที่ 5", "5화", "Серия 5", "Capítulo 5", "Folge 5", "第5話", "Staffel 2".
+- Season tetap jadi sheet sendiri. Halaman "Season 2" dicocokkan ke entri katalog yang juga bernomor 2 ("… 2", "… II", "Part 2"), bukan ke seri induknya. Sheet season 2 juga tidak digabung ke season 1 hanya karena TVmaze memakai satu entri untuk semua season: nomor installment harus sama.
 - Kalau tetap tidak ketemu, koreksi judulnya sekali di popup. Koreksi disimpan sebagai *alias*, jadi kunjungan berikutnya otomatis masuk ke series yang benar.
+- Kalau dua sheet tetap terpisah (misalnya AniList memecah JoJo per part sementara Netflix menganggapnya satu serial), Kumostamp mendeteksi pasangan dengan judul yang sangat mirip lalu menanyakan sekali per kunjungan: gabungkan, atau tandai sebagai series berbeda. Pertanyaan muncul terus sampai dijawab; jawaban "beda" disimpan di `distinct` (ikut sync, jadi tidak ditanya lagi di browser lain). Kamu juga bisa merge kapan saja lewat ikon merge di sheet: pilih sheet pasangannya, tentukan judul/info katalog mana yang dipertahankan, dan merge bisa di-undo.
 
 ## Resume dan sync antar situs
 
@@ -78,7 +80,7 @@ Kumostamp menyimpan satu mark per situs untuk tiap episode, dan sync mengikuti m
 Setelah login MyAnimeList (`/login`), website menggabungkan library di browser ini dengan salinan di server, lalu menyimpan hasilnya ke keduanya.
 
 - Penggabungannya sama seperti import: mark terbaru menang per episode, mark per situs digabung, info katalog dan judul yang lebih baru ikut menang.
-- Penghapusan dicatat beserta waktunya (`removed`), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali.
+- Penghapusan dicatat beserta waktunya (`removed`), jadi salinan lama di browser lain tidak menghidupkannya lagi. Menonton lagi setelah dihapus membuatnya muncul kembali. Merge yang di-undo dicatat di `removed.aliases`, jadi browser lain tidak menggabungkannya lagi. Jawaban "bukan duplikat" dari duplicate check disimpan di `distinct`.
 - Website sinkron sekitar 2 detik setelah ada perubahan, saat tab aktif lagi, dan setiap menit.
 - Extension bisa sinkron sendiri: popup, *Connected accounts*, *Kumostamp*, Connect. Extension menyimpan *device token* (hanya di background worker) lalu mengirim mark baru paling lambat ~30 detik dan menarik mark dari browser lain tiap 2 menit. Disconnect mencabut token di server juga.
 

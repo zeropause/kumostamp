@@ -1,6 +1,12 @@
 /* One stroke family, 1.75 weight, drawn on a 24 grid. */
 const PATHS: Record<string, React.ReactNode> = {
   open: <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
+  merge: (
+    <>
+      <path d="M6 4v5a4 4 0 0 0 4 4h2M18 4v5a4 4 0 0 1-4 4h-2" />
+      <path d="M12 13v7M9 17l3 3 3-3" />
+    </>
+  ),
   copy: (
     <>
       <rect x="8" y="8" width="12" height="12" rx="1" />

@@ -40,6 +40,8 @@ interface CatalogApi {
   complete(hit: Partial<Meta> & { source: Source; id: number | string }, season?: number | null): Promise<Meta>;
   match(signals: MatchSignals): Promise<MatchResult>;
   brief(m: Meta): Brief;
+  similarity(a: string, b: string): number;
+  installment(title: string): number | null;
 }
 
 const C = (globalThis as unknown as { KSCatalog: CatalogApi }).KSCatalog;
@@ -51,6 +53,8 @@ export const details = C.details;
 export const complete = C.complete;
 export const match = C.match;
 export const brief = C.brief;
+export const similarity = C.similarity;
+export const installment = C.installment;
 
 /** A search hit is thin (movies especially); fetch the full record before saving it. */
 export const fullMovie = (hit: Meta): Promise<Meta> =>
