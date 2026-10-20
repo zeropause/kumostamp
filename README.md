@@ -4,6 +4,16 @@ Simpan menit terakhir yang kamu tonton di anime atau series, lalu lanjutkan di s
 
 Contoh: kamu nonton *JoJo Part 6* episode 2 sampai 26:14 di situs A, lalu pindah ke situs B. Begitu episode itu dibuka di situs B, muncul tombol *Jump to 26:14*.
 
+## Tampilan
+
+Halaman library: posisi terakhir di setiap series langsung terlihat di atas, lengkap dengan tombol resume, filter status/jenis, dan timeline per episode.
+
+![Halaman library Kumostamp](docs/screenshots/library.png)
+
+Halaman series: metadata dan sinopsis dari AniList, statistik tontonan, serta daftar episode beserta mark dari tiap situs.
+
+![Halaman series Kumostamp](docs/screenshots/series.png)
+
 | Bagian | Folder | Isi |
 |---|---|---|
 | Extension (Chrome/Edge, Manifest V3) | `extension/` | Membaca video yang diputar beserta judul dan episodenya, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
