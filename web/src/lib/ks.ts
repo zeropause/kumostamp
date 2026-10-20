@@ -60,6 +60,7 @@ export interface Series {
 export interface Removed {
   series: Record<string, number>;
   episodes: Record<string, Record<string, number>>;
+  aliases?: Record<string, number>; // merges the user has undone
 }
 
 export interface Db {
@@ -67,6 +68,7 @@ export interface Db {
   series: Record<string, Series>;
   aliases: Record<string, string>;
   removed?: Removed;
+  distinct?: Record<string, number>; // "<keyA>|<keyB>" pairs the user said are different works
   updatedAt: number;
   sample?: boolean;
 }
@@ -76,6 +78,9 @@ export type Op =
   | { type: "setEpisode"; key: string; episode: number | null; time?: number; duration?: number; url?: string; title?: string }
   | { type: "upsertSeries"; key?: string; title?: string; meta?: Meta }
   | { type: "alias"; from: string; to?: string; toKey?: string }
+  | { type: "mergeSeries"; fromKey: string; toKey: string }
+  | { type: "unmerge"; key: string; titleKey?: string; toKey?: string }
+  | { type: "keepDistinct"; a: string; b: string }
   | { type: "deleteSeries"; key: string }
   | { type: "deleteEpisode"; key: string; episode: number | null }
   | { type: "moveEpisode"; key: string; from: number | null; to: number | null }

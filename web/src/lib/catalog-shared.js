@@ -251,7 +251,24 @@
   }
 
   const SEASON_RE = /\b(?:season|part|cour)\s*(\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)\s+season\b|(?:temporada|staffel|saison|stagione|sezon|musim|phần|ซีซั่น|시즌|сезон)\s*(\d{1,2})/i;
-  const seasonIn = (t) => { const m = String(t || "").match(SEASON_RE); return m ? Number(m[1] || m[2] || m[3]) : null; };
+  const TRAILING_NO = /\s([2-9])$/; // "Edgerunners 2"; single digits avoid titles like "Ocean's 11" and "1917"
+  const TRAILING_ROMAN = /\b(II|III|IV|V|VI|VII|VIII|IX)$/i;
+  const ROMAN = { II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9 };
+
+  /**
+   * Which installment a title names: "Season 2", "Part 2", "2nd Season", a
+   * trailing "2", or a trailing Roman numeral ("… II"). Null means the base work.
+   * Catalogs use all of these for the same sequel, so compare the number, not the spelling.
+   */
+  function installment(t) {
+    const s = String(t || "").trim();
+    const m = s.match(SEASON_RE);
+    if (m) return Number(m[1] || m[2] || m[3]);
+    const r = s.match(TRAILING_ROMAN);
+    if (r) return ROMAN[r[1].toUpperCase()];
+    const n = s.match(TRAILING_NO);
+    return n ? Number(n[1]) : null;
+  }
   const words = (t) => new Set(norm(t).split(" ").filter(Boolean));
   const isMovie = (m) => /movie|film/i.test(m.kind || "");
 
@@ -366,7 +383,7 @@
     const episode = signals.episode != null ? Number(signals.episode) : null;
     const minutes = signals.duration ? signals.duration / 60 : null;
     const animeSite = signals.host ? ANIME_HOSTS.test(signals.host) : false;
-    const wantSeason = seasonIn(title);
+    const wantSeason = installment(title);
     const base = title.replace(SEASON_RE, " ").replace(/\s{2,}/g, " ").trim();
     const wanted = norm(base).replace(/\s/g, "");
     const wantWords = words(base);
@@ -382,9 +399,12 @@
       if (contains || covers) s = Math.max(s, 0.78); // every word present, any order
 
       // 2. Season: "Season 2" should not take another season's entry.
-      const theirs = names.map(seasonIn).find((x) => x != null);
+      const theirs = names.map(installment).find((x) => x != null);
       if (wantSeason > 1 && theirs === wantSeason) s += 0.1;
       if (wantSeason > 1 && theirs != null && theirs !== wantSeason) s -= 0.3;
+      // A parent-show record has no installment number; it is a fallback for a
+      // later season, not a better match than an entry that actually names it.
+      if (wantSeason > 1 && theirs == null && !byId) s -= 0.08;
       if (!wantSeason && theirs != null && theirs > 1 && !byId) s -= 0.12;
 
       // 3. Episode number beyond the entry's episode count: a different entry.
@@ -424,7 +444,7 @@
       .map((m, i) => ({ m, s: score(m, i, true).s }))
       // Ties: the earliest season, then AniList (richer anime records: episode titles, runtime).
       .sort((a, b) => (b.s - a.s) || ((a.m.year || 9999) - (b.m.year || 9999)) || ((b.m.source === "anilist") - (a.m.source === "anilist")));
-    const best = await complete(ranked[0].m, seasonIn(title)).catch(() => ranked[0].m);
+    const best = await complete(ranked[0].m, installment(title)).catch(() => ranked[0].m);
     best.ids = idsOf(best, wd);
     return { best, alternatives: ranked.slice(1, 4).map((c) => brief(c.m)), confident: ranked.length === 1 || ranked[0].s - ranked[1].s >= 0.08 };
   }
@@ -445,12 +465,20 @@
 
     // 1. A streaming service's own ID (Netflix show, TMDB title) is the same whatever
     //    language the title is shown in.
+    const wantSeason = installment(title);
+    let idFallback = null;
     const ids = Object.assign({}, signals.ids, signals.netflixId ? { netflix: signals.netflixId } : null);
     for (const k of ["netflix", "tmdbTv", "tmdbMovie"]) {
       if (!ids[k]) continue;
       const wd = await wikidataIds(`?item wdt:${WD_PROPS[k]} "${String(ids[k]).replace(/\D/g, "")}" .`).catch(() => null);
       const viaId = wd && (await fromIds(wd, signals, title).catch(() => null));
-      if (viaId) return viaId;
+      if (!viaId) continue;
+      // A service ID usually names the show, not the season. If the page names a
+      // later season and this entry does not, keep it as a fallback while the
+      // title search looks for the matching season entry.
+      const got = viaId.best ? installment(viaId.best.title) : null;
+      if (!wantSeason || wantSeason <= 1 || (got || 1) === wantSeason) return viaId;
+      idFallback = viaId;
     }
 
     // 2. On a page in another language, an exact Wikidata label (or alias) in that
@@ -466,12 +494,13 @@
       });
       if (viaLabel && norm(viaLabel.label) === norm(title.replace(SEASON_RE, " "))) {
         const r = await fromIds(viaLabel.ids, signals, title).catch(() => null);
-        if (r) return r;
+        // The label lookup strips the season, so only return it early when the
+        // entry it found is the installment the page names.
+        if (r && (!wantSeason || wantSeason <= 1 || (installment(r.best && r.best.title) || 1) === wantSeason)) return r;
       }
     }
 
     // 3. Title search in the catalogs themselves.
-    const wantSeason = seasonIn(title);
     const base = title.replace(SEASON_RE, " ").replace(/\s{2,}/g, " ").trim();
     const sources = film ? ["anilist", "cinemeta"] : ["anilist", "tvmaze"];
     const results = await Promise.all(sources.map((s) =>
@@ -509,9 +538,26 @@
       const r = await fromIds(viaLabel.ids, signals, title).catch(() => null);
       if (r) {
         // An exact label hit is as good as a title match; a fuzzy one stays a best guess.
-        r.confident = r.confident && norm(viaLabel.label) === norm(base);
+        const fits = !wantSeason || wantSeason <= 1 || (installment(r.best && r.best.title) || 1) === wantSeason;
+        r.confident = fits && r.confident && norm(viaLabel.label) === norm(base);
         return r;
       }
+    }
+
+    if (idFallback) {
+      // The service's ID names the parent show (or another installment). Keep it
+      // as a best guess and offer the title-search entries the user can switch to.
+      const seen = new Set();
+      const alternatives = idFallback.alternatives
+        .concat(candidates.slice(0, 3).map((c) => brief(c.m)))
+        .filter((a) => {
+          const key = `${a.source}:${a.id}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 3);
+      return { best: idFallback.best, alternatives, confident: false };
     }
 
     if (allFailed) throw new Error("No catalog answered.");
@@ -523,7 +569,7 @@
     return { source: m.source, id: m.id, title: m.title, altTitle: m.altTitle || "", kind: m.kind || "", year: m.year || null, episodes: m.episodes || null, image: m.image || "" };
   }
 
-  const api = { LABEL, RETIRED, search, details, complete, match, brief, sameEntry, similarity, norm };
+  const api = { LABEL, RETIRED, search, details, complete, match, brief, sameEntry, similarity, norm, installment };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.KSCatalog = api;
 })(typeof self !== "undefined" ? self : this);

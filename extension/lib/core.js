@@ -10,7 +10,7 @@
   const FILM = "film";
 
   function emptyDb() {
-    return { version: VERSION, series: {}, aliases: {}, removed: { series: {}, episodes: {} }, updatedAt: 0 };
+    return { version: VERSION, series: {}, aliases: {}, removed: { series: {}, episodes: {}, aliases: {} }, distinct: {}, updatedAt: 0 };
   }
 
   /**
@@ -326,6 +326,7 @@
         const to = op.toKey || resolveKey(db, op.to);
         if (from && to && from !== to) {
           db.aliases[from] = to;
+          delete removed.aliases[from]; // an explicit re-file wins over an earlier undo
           if (db.series[from] && db.series[to]) mergeInto(db.series[to], db.series[from]);
           if (db.series[from] && !db.series[to]) {
             db.series[to] = Object.assign(db.series[from], { key: to, title: op.to || db.series[from].title });
@@ -333,6 +334,42 @@
           if (from !== to) delete db.series[from];
           db.updatedAt = now;
         }
+        break;
+      }
+      case "mergeSeries": {
+        // A deliberate merge of two sheets for one show: the target keeps its info,
+        // both sets of marks are kept, and the old title keeps filing under the target.
+        const from = db.series[op.fromKey];
+        const to = db.series[op.toKey];
+        if (!from || !to || op.fromKey === op.toKey) break;
+        const folded = new Set([op.fromKey, seriesKey(from.title)]);
+        mergeInto(to, from);
+        for (const key of folded) {
+          if (!key || key === op.toKey) continue;
+          db.aliases[key] = op.toKey;
+          delete removed.aliases[key];
+        }
+        delete db.series[op.fromKey];
+        touch(db, to, now);
+        break;
+      }
+      case "unmerge": {
+        // Undo a merge: stop filing the folded title under the target, and remember
+        // that so a synced copy doesn't quietly re-file it.
+        for (const key of [op.key, op.titleKey]) {
+          if (!key || (op.toKey ? db.aliases[key] !== op.toKey : !db.aliases[key])) continue;
+          delete db.aliases[key];
+          removed.aliases[key] = now;
+        }
+        db.updatedAt = now;
+        break;
+      }
+      case "keepDistinct": {
+        // The duplicate check asked; these two sheets are different works, so don't ask again.
+        if (!op.a || !op.b || op.a === op.b) break;
+        db.distinct = db.distinct || {};
+        db.distinct[[op.a, op.b].sort().join("|")] = now;
+        db.updatedAt = now;
         break;
       }
       case "deleteSeries":
@@ -425,6 +462,7 @@
     db.removed = db.removed || {};
     db.removed.series = db.removed.series || {};
     db.removed.episodes = db.removed.episodes || {};
+    db.removed.aliases = db.removed.aliases || {};
     return db.removed;
   }
 
@@ -453,7 +491,7 @@
    */
   function mergeDb(db, incoming) {
     db.series = db.series || {};
-    db.aliases = Object.assign(db.aliases || {}, incoming.aliases || {});
+    db.aliases = db.aliases || {};
     const removed = removedOf(db);
     const theirs = incoming.removed || {};
     for (const [key, t] of Object.entries(theirs.series || {})) if (!(removed.series[key] >= t)) removed.series[key] = t;
@@ -462,6 +500,12 @@
         if (!(removed.episodes[key] && removed.episodes[key][k] >= t)) markRemoved(removed, key, k, t);
       }
     }
+    for (const [key, t] of Object.entries(theirs.aliases || {})) if (!(removed.aliases[key] >= t)) removed.aliases[key] = t;
+    // Aliases the other copy knows, unless this copy has since undone that merge.
+    for (const [key, to] of Object.entries(incoming.aliases || {})) if (!removed.aliases[key]) db.aliases[key] = to;
+    for (const key of Object.keys(removed.aliases)) delete db.aliases[key];
+    db.distinct = db.distinct || {};
+    for (const [pair, t] of Object.entries(incoming.distinct || {})) if (!(db.distinct[pair] >= t)) db.distinct[pair] = t;
     for (const [key, s] of Object.entries(incoming.series || {})) {
       // A sheet the other copy still files under a title this one has since re-filed (alias).
       const to = db.aliases[key] && db.aliases[key] !== key ? db.aliases[key] : key;
@@ -497,7 +541,7 @@
       }
       return JSON.stringify(v === undefined ? null : v);
     };
-    return stable({ series: db.series || {}, aliases: db.aliases || {}, removed: db.removed || {} });
+    return stable({ series: db.series || {}, aliases: db.aliases || {}, removed: db.removed || {}, distinct: db.distinct || {} });
   }
 
   function findEntry(db, title, episode) {

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { AddPanel } from "./components/AddPanel";
+import { DuplicateCheck } from "./components/DuplicateCheck";
+import { MergePanel } from "./components/MergePanel";
 import { TitleBlock } from "./components/TitleBlock";
 import { details, RETIRED } from "./lib/catalog";
 import { needsInfo, runAutoLink } from "./lib/autolink";
@@ -69,6 +71,8 @@ export default function App() {
     <>
       <TitleBlock />
       <AddPanel />
+      <MergePanel />
+      <DuplicateCheck />
       <Routes>
         <Route path="/" element={<Library />} />
         <Route path="/series/:key" element={<SeriesPage />} />

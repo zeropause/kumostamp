@@ -184,9 +184,16 @@ function hintFromTab(tab) {
   };
 }
 
+/** "Season 2", "Part 2" and "… 2" name the same installment; a parent show and "Season 1" are the base. */
+function sameInstallment(a, b) {
+  return (KSCatalog.installment(a) || 1) === (KSCatalog.installment(b) || 1);
+}
+
 /** Sheets that turn out to be the same work (shared catalog entry or cross-catalog ID). */
-function sameSheet(db, meta, exceptKey) {
-  return Object.values(db.series).find((s) => s.key !== exceptKey && s.meta && !needsInfo(s) && KSCatalog.sameEntry(s.meta, meta));
+function sameSheet(db, meta, exceptKey, title) {
+  return Object.values(db.series).find(
+    (s) => s.key !== exceptKey && s.meta && !needsInfo(s) && KSCatalog.sameEntry(s.meta, meta) && (!title || sameInstallment(title, s.title)),
+  );
 }
 
 function identifyNew(title, hint) {
@@ -200,7 +207,7 @@ function identifyNew(title, hint) {
       if (r.best) {
         entry.meta = Object.assign({}, r.best, { confident: r.confident, alternatives: r.alternatives, autoLinked: true });
         const db = await readDb();
-        const known = sameSheet(db, r.best);
+        const known = sameSheet(db, r.best, undefined, title);
         if (known && KS.resolveKey(db, title) !== known.key) {
           await mutate({ type: "alias", from: title, toKey: known.key }); // file this title under the existing sheet
           entry.mergedInto = known.title;
@@ -220,7 +227,7 @@ async function mergeDuplicates(key) {
   const db = await readDb();
   const sheet = db.series[key];
   if (!sheet || !sheet.meta) return;
-  const twin = sameSheet(db, sheet.meta, key);
+  const twin = sameSheet(db, sheet.meta, key, sheet.title);
   if (!twin) return;
   const [keep, fold] = (twin.createdAt || 0) <= (sheet.createdAt || 0) ? [twin, sheet] : [sheet, twin];
   if (KS.seriesKey(fold.title) !== fold.key) return; // only fold sheets still keyed by their own title
@@ -364,13 +371,18 @@ async function setTried(key, next) {
  * (Stranger Things); the translated title stays filed under it.
  */
 async function applyMeta(key, meta) {
-  const rename = meta.confident !== false && meta.title ? { title: meta.title } : {};
+  const before = (await readDb()).series[key];
+  const sheetTitle = before ? before.title : "";
+  // Never rename a seasonal sheet to a catalog title for a different installment:
+  // "Show Season 2" must not become "Show" just because the parent show matched.
+  const rename = meta.confident !== false && meta.title && sameInstallment(sheetTitle, meta.title) ? { title: meta.title } : {};
   await mutate(Object.assign({ type: "upsertSeries", key, meta }, rename));
   const db = await readDb();
   const names = [meta.title, meta.altTitle].concat(meta.synonyms || []).filter(Boolean).slice(0, 10);
   for (const name of names) {
     const k = KS.seriesKey(name);
-    if (k && k !== key && !db.series[k] && !(db.aliases && db.aliases[k])) await mutate({ type: "alias", from: name, toKey: key });
+    if (!k || k === key || !sameInstallment(name, sheetTitle)) continue;
+    if (!db.series[k] && !(db.aliases && db.aliases[k])) await mutate({ type: "alias", from: name, toKey: key });
   }
 }
 

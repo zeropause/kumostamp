@@ -20,6 +20,10 @@ export interface AddRequest {
   source?: Source | "manual";
 }
 
+export interface MergeRequest {
+  key: string; // the sheet the action was opened from
+}
+
 interface Ui {
   toast: (text: string, action?: ToastAction) => void;
   run: (operation: Op, okText?: string) => Promise<void>;
@@ -27,6 +31,9 @@ interface Ui {
   openAdd: (req: AddRequest) => void;
   closeAdd: () => void;
   addRequest: AddRequest | null;
+  openMerge: (key: string) => void;
+  closeMerge: () => void;
+  mergeRequest: MergeRequest | null;
 }
 
 const UiContext = createContext<Ui | null>(null);
@@ -40,6 +47,7 @@ export function useUi(): Ui {
 export function UiProvider({ children }: { children: ReactNode }) {
   const [toastState, setToast] = useState<ToastState>({ text: "", on: false });
   const [addRequest, setAddRequest] = useState<AddRequest | null>(null);
+  const [mergeRequest, setMergeRequest] = useState<MergeRequest | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
   const toast = useCallback((text: string, action?: ToastAction) => {
@@ -76,9 +84,18 @@ export function UiProvider({ children }: { children: ReactNode }) {
     toast,
     run,
     copy,
-    openAdd: (req) => setAddRequest({ ...req }),
+    openAdd: (req) => {
+      setMergeRequest(null); // one panel at a time
+      setAddRequest({ ...req });
+    },
     closeAdd: () => setAddRequest(null),
     addRequest,
+    openMerge: (key) => {
+      setAddRequest(null); // one panel at a time
+      setMergeRequest({ key });
+    },
+    closeMerge: () => setMergeRequest(null),
+    mergeRequest,
   };
 
   return (

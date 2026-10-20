@@ -187,7 +187,7 @@ export function ContinueWatching({ series }: { series: Series }) {
 
 /** Tools every sheet header carries: continue watching, refresh info, link info, delete. */
 export function SheetTools({ series, onDeleted }: { series: Series; onDeleted?: () => void }) {
-  const { openAdd, run, toast } = useUi();
+  const { openAdd, openMerge, run, toast } = useUi();
   const [spinning, setSpinning] = useState(false);
   const m = series.meta;
 
@@ -230,6 +230,15 @@ export function SheetTools({ series, onDeleted }: { series: Series; onDeleted?: 
         onClick={() => openAdd({ linkKey: series.key, query: series.title, source: m?.source && m.source !== "jikan" ? m.source : "anilist" })}
       >
         <Icon name="link" />
+      </button>
+      <button
+        className="btn btn-icon"
+        type="button"
+        title="Merge with another sheet for the same show"
+        aria-label={`Merge ${series.title} with another sheet`}
+        onClick={() => openMerge(series.key)}
+      >
+        <Icon name="merge" />
       </button>
       <button className="btn btn-icon btn-danger" type="button" title="Delete this sheet" aria-label={`Delete ${series.title}`} onClick={remove}>
         <Icon name="trash" />
