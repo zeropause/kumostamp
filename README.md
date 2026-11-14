@@ -1,134 +1,60 @@
 # Kumostamp
 
-Simpan menit terakhir yang kamu tonton di anime atau series, lalu lanjutkan di situs streaming mana pun.
-
-Contoh: kamu nonton *JoJo Part 6* episode 2 sampai 26:14 di situs A, lalu pindah ke situs B. Begitu episode itu dibuka di situs B, muncul tombol *Jump to 26:14*.
-
-## Tampilan
-
-Halaman library: posisi terakhir di setiap series langsung terlihat di atas, lengkap dengan tombol resume, filter status/jenis, dan timeline per episode.
+Simpan menit terakhir yang kamu tonton di anime atau series, lalu lanjutkan otomatis di situs streaming lain.
 
 ![Halaman library Kumostamp](docs/screenshots/library.png)
-
-Halaman series: metadata dan sinopsis dari AniList, statistik tontonan, serta daftar episode beserta mark dari tiap situs.
-
 ![Halaman series Kumostamp](docs/screenshots/series.png)
 
-| Bagian | Folder | Isi |
+## Komponen
+
+| Bagian | Folder | Stack & Fungsi |
 |---|---|---|
-| Extension (Chrome/Edge, Manifest V3) | `extension/` | Membaca video yang diputar beserta judul dan episodenya, menyimpan timestamp, dan menampilkan tombol resume di situs lain |
-| Website (React + Vite + TypeScript) | `web/` | Library series dan timestamp, daftar episode dari AniList / TVmaze / IMDb, tambah dan edit manual, export/import |
-| API (Hono di Cloudflare Workers + D1) | `web/worker/` | Login MyAnimeList, sinkron library antar browser, update list MAL |
+| Extension | `extension/` | Chrome/Edge MV3 — deteksi video/episode, simpan mark lokal, auto-resume |
+| Website & API | `web/` | React + Vite + TS, Hono on Cloudflare Workers + D1 — library, sync akun MAL/AniList |
+| Discord Helper | `helper/` | Node.js — bridge lokal untuk Discord Rich Presence (opsional) |
 
-Mark selalu disimpan lokal di browser dan extension, jadi semuanya tetap jalan tanpa login.
+## Menjalankan Secara Lokal
 
-## Menjalankan
-
-### Website
-
+### 1. Website & API
 ```bash
 cd web
 npm install
 cp .dev.vars.example .dev.vars   # isi TOKEN_KEY, MAL_CLIENT_ID, MAL_CLIENT_SECRET
-npm run db:migrate               # ulangi setiap ada file baru di web/migrations/
+npm run db:migrate
 npm run dev
 ```
+Buka `http://localhost:5173` (port harus `5173` agar extension terhubung).
+- **MAL OAuth**: redirect URL `http://localhost:5173/api/auth/mal/callback`
+- **AniList OAuth (opsional)**: isi `VITE_ANILIST_CLIENT_ID` di `web/.env.local`, redirect URL `http://localhost:5173/login`
 
-Buka http://localhost:5173. Port harus 5173 supaya extension mau terhubung. Dev server yang sama menjalankan API (`/api/*`) dan D1 lokal.
+### 2. Extension
+1. Buka `chrome://extensions` (atau `edge://extensions`) dan aktifkan **Developer mode**.
+2. Klik **Load unpacked** → pilih folder `extension/`.
+3. Refresh tab website hingga header menampilkan *Extension connected*.
 
-Client MAL dibuat di https://myanimelist.net/apiconfig (App Type: web) dengan redirect URL `http://localhost:5173/api/auth/mal/callback`.
+### 3. Discord Rich Presence (Opsional)
+Butuh Discord desktop aktif. Lihat [helper/README.md](helper/README.md) untuk detail Application ID & art assets.
+```bash
+cd helper
+cp config.example.json config.json   # isi clientId
+node index.mjs
+```
+Aktifkan melalui onboarding website atau popup extension → **Connected accounts → Discord**.
 
-Login AniList (opsional) butuh client di https://anilist.co/settings/developer dengan redirect URL `http://localhost:5173/login`. Salin `web/.env.example` ke `web/.env.local` dan isi `VITE_ANILIST_CLIENT_ID`. Produksi memakai redirect URL domainnya sendiri.
-
-### Extension
-
-1. Buka `chrome://extensions` (atau `edge://extensions`) dan aktifkan Developer mode.
-2. Klik Load unpacked, pilih folder `extension/`.
-3. Reload tab website. Status di header berubah menjadi *Extension connected*.
-
-Setelah extension di-reload, refresh juga tab website yang sedang terbuka.
-
-### Discord Rich Presence (opsional)
-
-Menampilkan series, episode, dan progress bar di profil Discord. Hanya tampil kalau **Discord desktop** sedang berjalan, dan bisa dilihat teman.
-
-1. Buat application di https://discord.com/developers/applications, salin **Application ID**, lalu unggah tiga asset di *Rich Presence → Art Assets*: `kumostamp`, `playing`, `paused` (128×128 atau lebih besar).
-2. Jalankan helper (tidak ada dependency yang perlu di-install):
-
-   ```bash
-   cd helper
-   cp config.example.json config.json   # isi clientId
-   node index.mjs
-   ```
-
-   Log yang benar: `listening on http://127.0.0.1:47834` lalu `discord connected`.
-3. Reload extension, buka popup → **Connected accounts → Discord** → nyalakan *Show what I'm watching in Discord*.
-
-Baris pertama card ("Watching …") berisi judul series, bukan nama aplikasi: helper mengisi field `name` di activity. Baris itu kembali menjadi "Kumostamp" kalau toggle *Show the series title* dimatikan. Saat pause, progress bar diganti keterangan posisi (`Ep 5 · Paused at 16:27`) karena Discord menghitung bar di kliennya sendiri dan tidak bisa dibekukan. Bar kembali muncul saat play, dan hilang sama sekali kalau *Show progress* dimatikan.
-
-Helper boleh ditutup kapan saja; mark tetap tersimpan. Kalau helper tidak jalan, popup menampilkan *Helper not running*. Detail dan troubleshooting ada di [helper/README.md](helper/README.md).
-
-### Deploy
-
+## Deploy (Cloudflare Workers)
 ```bash
 npx wrangler login
-npx wrangler d1 create kumostamp        # salin database_id ke wrangler.jsonc
+npx wrangler d1 create kumostamp        # salin database_id ke web/wrangler.jsonc
 npm run db:migrate:remote
-npx wrangler secret put MAL_CLIENT_ID   # ulangi untuk MAL_CLIENT_SECRET dan TOKEN_KEY
+npx wrangler secret put MAL_CLIENT_ID   # ulangi untuk MAL_CLIENT_SECRET & TOKEN_KEY
 npm run deploy
 ```
+Daftarkan `https://<domain>/api/auth/mal/callback` di MAL dan isi `VITE_ANILIST_CLIENT_ID` di `web/.env.production` sebelum deploy.
 
-Daftarkan juga `https://<domain>/api/auth/mal/callback` di client MAL.
-
-`VITE_ANILIST_CLIENT_ID` ditanam ke JavaScript saat build, bukan secret Worker: isi di `web/.env.production` sebelum `npm run deploy`, dan daftarkan `https://<domain>/login` sebagai redirect URL client AniList-nya.
-
-## Cara kerja singkat
-
-Extension mengambil `<video>` terbesar yang sedang diputar (termasuk di iframe), lalu membaca judul dan episode dari state player, DOM per situs, JSON-LD, Media Session, URL, dan judul halaman. Hasil yang tidak yakin baru disimpan setelah kamu konfirmasi di popup.
-
-Tiap episode punya satu mark per situs. Saat episode yang sama diputar di situs lain, player lompat ke mark terbaru, dengan tombol Undo.
-
-Setelah login MyAnimeList, library di browser digabung dengan salinan di server: mark terbaru menang per episode, dan yang sudah dihapus tetap terhapus. Episode yang diputar minimal 1 menit membuat anime itu *Watching* di list MAL (dan AniList, kalau dihubungkan) dengan progres = nomor episode. Progres tidak pernah diturunkan, dan *Completed* tidak pernah di-set otomatis.
-
-Detailnya ada di [docs/how-it-works.md](docs/how-it-works.md).
-
-## Struktur
-
-```
-extension/
-  background.js        satu-satunya penulis database (chrome.storage.local)
-  content.js           deteksi video, kartu resume
-  detect.js            urutan pembaca judul/episode + jejak diagnosa
-  main-world.js        pembaca state player (Netflix) di dunia JS halaman
-  bridge.js            penghubung ke website
-  popup.html/css/js
-  lib/core.js          parsing judul + operasi data (sumber utama)
-  lib/catalog.js       pencarian katalog dan skor kecocokan (sumber utama)
-  lib/accounts.js      token AniList (dari halaman login website)
-  lib/anilist-sync.js  antrean update list AniList
-  lib/cloud-sync.js    sinkron extension ke akun
-web/
-  src/routes/          Library, SeriesPage, Login, ExtensionConnect
-  src/components/
-  src/lib/             store, sync, catalog, core.js dan catalog-shared.js (salinan)
-  src/styles/          tokens.css (sumber utama token desain), app.css
-  worker/              API: auth MAL, library, sinkron MAL
-  migrations/          skema D1
-helper/
-  index.mjs            server lokal 127.0.0.1 + watchdog; menerima state dari extension
-  discord.mjs          klien IPC Discord (socket persisten, reconnect sendiri)
-scripts/
-  sync-shared.mjs      salin core.js, catalog.js, dan tokens.css di antara kedua bagian
-  render-icons.mjs     render ikon PNG extension dari logo
-```
-
-Setelah mengedit `extension/lib/core.js`, `extension/lib/catalog.js`, atau `web/src/styles/tokens.css`, jalankan `node scripts/sync-shared.mjs`.
-
-## Batasan
-
-- Video lewat plugin non-HTML5 atau canvas DRM tidak bisa dibaca.
-- Judul diambil dari halaman, jadi kadang perlu dikoreksi sekali per situs.
-- Beberapa player custom menimpa `currentTime`. Kalau begitu, salin waktunya (tombol Copy) dan seek manual.
-- Series dari TVmaze atau IMDb tidak ikut ke list MAL/AniList. Season yang nomor episodenya berlanjut (Ep 29 yang sebenarnya S2 Ep 5) belum didukung.
-- Discord Rich Presence butuh helper desktop (`helper/`) dan Discord desktop; tidak tampil dari Discord web atau mobile.
-- Belum ada tes otomatis.
+## Catatan Pengembang
+- Sinkronisasi file shared (`core.js`, `catalog.js`, `tokens.css`) antara `extension/` dan `web/`:
+  ```bash
+  node scripts/sync-shared.mjs
+  ```
+- Penjelasan arsitektur dan alur kerja lengkap: [docs/how-it-works.md](docs/how-it-works.md).
+- Batasan: hanya mendukung player `<video>` HTML5, series TVmaze/IMDb tidak di-sync ke MAL/AniList, dan belum ada automated test.
