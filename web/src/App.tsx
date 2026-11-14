@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import { AddPanel } from "./components/AddPanel";
 import { DuplicateCheck } from "./components/DuplicateCheck";
 import { MergePanel } from "./components/MergePanel";
+import { Onboarding } from "./components/Onboarding";
 import { TitleBlock } from "./components/TitleBlock";
 import { details, RETIRED } from "./lib/catalog";
 import { needsInfo, runAutoLink } from "./lib/autolink";
@@ -72,6 +73,7 @@ export default function App() {
       <TitleBlock />
       <AddPanel />
       <MergePanel />
+      <Onboarding />
       <DuplicateCheck />
       <Routes>
         <Route path="/" element={<Library />} />

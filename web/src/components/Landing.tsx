@@ -5,6 +5,7 @@
  */
 import type { Mode } from "../lib/store";
 import { Icon } from "./Icon";
+import { openOnboarding } from "./Onboarding";
 import { useUi } from "./ui";
 
 interface Props {
@@ -71,7 +72,11 @@ export function Landing({ mode, onSample }: Props) {
           )}
           {mode === "extension" && (
             <p className="landing-allow">
-              <strong>Extension connected.</strong> Play an episode anywhere; your first mark lands here the moment you pause.
+              <strong>Extension connected.</strong> Play an episode anywhere; your first mark lands here the moment you pause.{" "}
+              <button className="linklike" type="button" onClick={() => openOnboarding(1)}>
+                Set up MyAnimeList, AniList or Discord Rich Presence
+              </button>
+              .
             </p>
           )}
         </div>

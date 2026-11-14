@@ -15,6 +15,7 @@ interface MalResult {
   total?: number;
   outcome: "updated" | "skipped" | "failed";
   reason?: string;
+  at?: number;
 }
 
 export type SyncState =
@@ -29,6 +30,8 @@ const PULL_EVERY_MS = 60_000;
 let state: SyncState = { status: "off" };
 /** The last thing sent to (or refused by) MyAnimeList, for the header. */
 let malNote = "";
+/** The newest recorded auto-update (mal_pushes), for the homepage's MAL chip. */
+let malLast: MalResult | null = null;
 const listeners = new Set<() => void>();
 let server: { db: Db; rev: number } | null = null;
 let active = false;
@@ -40,6 +43,11 @@ function set(next: SyncState) {
   state = next;
   if (next.status === "off") malNote = "";
   listeners.forEach((fn) => fn());
+}
+
+/** The most recent recorded auto-update to MyAnimeList (null before any). */
+export function getMalLast(): MalResult | null {
+  return malLast;
 }
 
 /** Would merging `other` into `base` change it? */
@@ -97,7 +105,8 @@ async function fillMalIds() {
 async function malSync() {
   await fillMalIds();
   await push();
-  const { results } = await api<{ results: MalResult[] }>("/api/library/mal-sync", { method: "POST", body: "{}" });
+  const { results, lastPush } = await api<{ results: MalResult[]; lastPush?: MalResult | null }>("/api/library/mal-sync", { method: "POST", body: "{}" });
+  if (lastPush || results.some((r) => r.outcome === "updated")) malLast = lastPush || results.filter((r) => r.outcome === "updated").slice(-1)[0] || null;
   const updated = results.filter((r) => r.outcome === "updated");
   const failed = results.find((r) => r.outcome === "failed");
   if (updated.length) {

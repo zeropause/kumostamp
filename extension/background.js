@@ -1,5 +1,5 @@
 /* Kumostamp background worker: the single writer of the progress database. */
-importScripts("lib/core.js", "lib/catalog.js", "lib/accounts.js", "lib/anilist-sync.js", "lib/cloud-sync.js");
+importScripts("lib/core.js", "lib/catalog.js", "lib/accounts.js", "lib/anilist-sync.js", "lib/cloud-sync.js", "lib/presence.js");
 
 const DB_KEY = "ks:db";
 const SETTINGS_KEY = "ks:settings";
@@ -8,7 +8,12 @@ const PENDING_MS = 5000; // after new media loads, hold saves this long for the 
 const START_AFTER = 60; // seconds of playback before AniList is told you are watching it
 const MIN_SAVE_TIME = 5; // seconds into a video before it counts as watched
 
-const DEFAULT_SETTINGS = { libraryUrl: "http://localhost:5173/", resumeChip: true, autoSave: true, autoResume: true, anilistSync: false };
+const DEFAULT_SETTINGS = {
+  libraryUrl: "http://localhost:5173/", resumeChip: true, autoSave: true, autoResume: true, anilistSync: false,
+  discordRpc: false, // presence is public: opt-in
+  discordShowTitle: true, // false keeps the title out of Discord
+  discordShowTime: true, // false hides the progress bar
+};
 const SYNC_SLACK = 20; // seconds: closer than this to the mark counts as caught up
 
 /* ---------- storage ---------- */
@@ -26,6 +31,7 @@ function mutate(op) {
     const db = KS.applyOp(await readDb(), op);
     await chrome.storage.local.set({ [DB_KEY]: db });
     KSCloud.soon(op); // send it to the account shortly, if one is connected
+    if (!op.fromCloud) KSPresence.libraryChanged(db, op); // title/poster for the Discord card
     return db;
   });
   return writeQueue;
@@ -78,6 +84,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabCache.delete(tabId);
   tabQueue.delete(tabId);
   chrome.storage.session.remove(tabKey(tabId));
+  KSPresence.clear(tabId);
 });
 
 /** What this tab is playing: the user's correction wins over detection. */
@@ -102,6 +109,39 @@ const isPending = (tab) => !!tab.pendingUntil && Date.now() < tab.pendingUntil;
 
 /** What detection said, as one comparable string. */
 const detectedKey = (m) => (m && m.series ? `${KS.seriesKey(m.series)}|${m.episode == null ? "" : m.episode}` : "");
+
+/**
+ * The YouTube gate (your call, 2026-10-22): video titles there carry no episode
+ * metadata, so any number in a title ("… #2") would pass for one. It only saves
+ * once the catalogs say the series exists — and everything else on YouTube keeps
+ * the old rules (user corrections bypass this via `force`/`corrected`).
+ * Returns true to save, or the skip reason to show in the popup.
+ */
+async function catalogVerdict(tab, id) {
+  const key = KS.seriesKey(id.series);
+  const cached = tab.catalogCheck;
+  if (cached && cached.key === key) return cached.verdict; // a settled "no" stays a no
+  const db = await readDb();
+  if (db.series[KS.resolveKey(db, id.series)]) return true; // already a tracked sheet
+  let e = identifying.get(key) || identifyNew(id.series, hintFromTab(tab));
+  // An unreachable catalog is not "not found": don't cache it, and retry every minute
+  // so a dropped connection only pauses YouTube marks, it doesn't silence them.
+  if (e.error && Date.now() - e.started > RECHECK_MS) {
+    identifying.delete(key);
+    e = identifyNew(id.series, hintFromTab(tab));
+  }
+  if (e.state === "pending") {
+    return `Checking MyAnimeList/AniList/TVmaze for "${id.series}"…`;
+  }
+  if (e.error) {
+    return "MyAnimeList/AniList/TVmaze didn't answer, so this YouTube video stays untracked. Nothing was saved.";
+  }
+  const verdict = e.meta
+    ? true
+    : `Nothing near "${id.series}" in MyAnimeList/AniList/TVmaze — a YouTube video by this title isn't tracked. Type your own title in the popup to override.`;
+  if (typeof verdict === "string") tab.catalogCheck = { key, verdict };
+  return verdict;
+}
 
 function savable(id) {
   if (!id) return false;
@@ -163,6 +203,7 @@ function inRunUp(tab) {
 // sync carry over. Saving waits for the answer, briefly, so a fresh 0:05 never
 // splits off a duplicate sheet or overwrites the real mark.
 const IDENTIFY_HOLD_MS = 15000;
+const RECHECK_MS = 60 * 1000; // an unreachable catalog resets by itself this often
 const identifying = new Map(); // seriesKey(title) -> { state: "pending" | "done", started, meta? }
 
 /** Only the keys that carry a value (so an unknown page signal never erases a known one). */
@@ -203,7 +244,13 @@ function identifyNew(title, hint) {
   identifying.set(tkey, entry);
   (async () => {
     try {
-      const r = await KSCatalog.match(Object.assign({ title }, hint));
+      let r;
+      try {
+        r = await KSCatalog.match(Object.assign({ title }, hint));
+      } catch (e) {
+        entry.error = true; // catalogs unreachable: not the same as "not found"
+        throw e;
+      }
       if (r.best) {
         entry.meta = Object.assign({}, r.best, { confident: r.confident, alternatives: r.alternatives, autoLinked: true });
         const db = await readDb();
@@ -292,6 +339,11 @@ async function saveProgress(tab, force) {
       ? "Found the series but not the episode number. Type it in Ep and press Enter (leave Ep empty for a film)."
       : "Title is only a guess. Press Enter in the title field to confirm it.");
   }
+  const saveHost = KS.hostOf((tab.meta && tab.meta.url) || (video && video.frameUrl) || "");
+  if (!force && !id.corrected && /(^|\.)youtube\.com$/i.test(saveHost)) {
+    const verdict = await catalogVerdict(tab, id);
+    if (verdict !== true) return skip(verdict);
+  }
   if (id.kind === "film" && !id.corrected) {
     // A detected "film" that the database knows as a series with episodes is a misread, not a film.
     const hit = KS.findEntry(await readDb(), id.series, null);
@@ -308,7 +360,7 @@ async function saveProgress(tab, force) {
   if (!force && tab.lastSave && now - tab.lastSave < SAVE_EVERY_MS) return null;
   tab.lastSave = now;
   tab.saveStatus = { saved: true, time: video.time, at: now };
-  const host = KS.hostOf((tab.meta && tab.meta.url) || video.frameUrl || "");
+  const host = saveHost;
   const hint = { episode: id.episode, duration: video.duration, host, lang: (tab.meta && tab.meta.lang) || "", netflixId: tab.meta && tab.meta.ids && tab.meta.ids.netflix, ids: (tab.meta && tab.meta.ids) || null };
   const saved = await mutate({
     type: "progress",
@@ -423,8 +475,8 @@ async function linkPending() {
   for (const s of Object.values(db.series)) if (needsInfo(s)) queueLink(s.key);
 }
 
-chrome.runtime.onInstalled.addListener(() => { linkPending(); KSCloud.wake(); });
-chrome.runtime.onStartup.addListener(() => { linkPending(); KSAnilistSync.run(); KSCloud.wake(); });
+chrome.runtime.onInstalled.addListener(() => { linkPending(); KSCloud.wake(); KSPresence.refresh(); });
+chrome.runtime.onStartup.addListener(() => { linkPending(); KSAnilistSync.run(); KSCloud.wake(); KSPresence.refresh(); });
 
 KSAnilistSync.init({
   readDb,
@@ -438,6 +490,7 @@ chrome.alarms.onAlarm.addListener((a) => {
 });
 
 KSCloud.init({ readDb, mutate, getSettings });
+KSPresence.init({ readDb, getSettings });
 
 /* ---------- badge: a red dot while a mark is being kept ---------- */
 
@@ -475,6 +528,7 @@ async function handle(msg, sender) {
         delete tab.library; // a playing page in this tab is not the library
         if (changed) tab.lastSave = 0; // a new episode saves on the next tick
         const who = identity(tab);
+        KSPresence.note(tabId, tab, who); // the page may have named a different episode
         if (who && who.series && savable(who)) {
           const db = await readDb();
           if (!db.series[KS.resolveKey(db, who.series)]) identifyNew(who.series, hintFromTab(tab));
@@ -492,10 +546,13 @@ async function handle(msg, sender) {
         if (isPending(tab)) {
           // New media is loading but the page has not named the episode yet: do not file it under the old one.
           tab.saveStatus = { saved: false, reason: "Reading which episode this is…", at: Date.now() };
+          KSPresence.clear(tabId); // do not keep the previous episode on the Discord card
           return { ok: true };
         }
         const playing = !msg.video.paused && !msg.video.ended;
-        badge(tabId, playing && savable(identity(tab)));
+        const who = identity(tab);
+        badge(tabId, playing && savable(who));
+        KSPresence.note(tabId, tab, who);
         if (savable(identity(tab)) && (await holdForSync(tabId, tab))) return { ok: true };
         // A pause or seek always saves; playback saves every few seconds.
         await saveProgress(tab, !!msg.force && savable(identity(tab)));
@@ -510,6 +567,7 @@ async function handle(msg, sender) {
         tab.lastSave = 0;
         tab.video = null;
       });
+      KSPresence.clear(tabId);
       chrome.tabs.sendMessage(tabId, { type: "reannounce" }, { frameId: 0 }).catch(() => {});
       return { ok: true };
     }
@@ -643,6 +701,9 @@ async function handle(msg, sender) {
     case "getSettings":
       return { settings: await getSettings() };
 
+    case "presenceStatus":
+      return KSPresence.status(!!msg.force);
+
     case "accountStatus":
       return { accounts: await KSAccounts.status() };
 
@@ -699,6 +760,7 @@ async function handle(msg, sender) {
     case "setSettings": {
       const next = Object.assign(await getSettings(), msg.settings);
       await chrome.storage.local.set({ [SETTINGS_KEY]: next });
+      KSPresence.refresh(); // turning Discord off clears it; turning it on publishes again
       return { settings: next };
     }
   }

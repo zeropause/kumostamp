@@ -1,0 +1,10 @@
+{
+  "clientId": "GANTI_APPLICATION_ID",
+  "port": 47834,
+  "token": "",
+  "assets": {
+    "large": "kumostamp",
+    "playing": "playing",
+    "paused": "paused"
+  }
+}

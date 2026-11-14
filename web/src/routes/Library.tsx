@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { ContinueBand } from "../components/ContinueBand";
 import { Landing } from "../components/Landing";
 import { Icon } from "../components/Icon";
+import { StatusChips } from "../components/StatusChips";
 import { AddMarkRow, EpisodeRow, EpisodeTableHead, FindInfo, MetaLine, Poster, SeriesTitleLink, SheetTools, SourceLine } from "../components/Sheet";
 import { Ruler } from "../components/Ruler";
 import { KS, epCode, isMovie, mediaType, seriesState, sortedEpisodes, type MediaType, type Series } from "../lib/ks";
@@ -46,6 +47,7 @@ export function Library() {
     return (
       <main id="main">
         {sampleNote}
+        <StatusChips />
         <Landing
           mode={mode}
           onSample={mode === "local" ? () => { loadSample(sampleDb()); window.scrollTo(0, 0); } : undefined}
@@ -64,6 +66,7 @@ export function Library() {
   return (
     <main id="main">
       {sampleNote}
+      <StatusChips />
       <ContinueBand db={db} />
       <div className="toolbar">
         <label className="filter">

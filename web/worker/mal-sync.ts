@@ -26,6 +26,7 @@ export interface MalResult {
   total?: number;
   outcome: "updated" | "skipped" | "failed";
   reason?: string;
+  at?: number;
 }
 
 function episodeNumber(key: string, ep: Episode, s: Series): number | null {
@@ -134,6 +135,17 @@ async function accessToken(env: Env, userId: string, force = false): Promise<str
     )
     .run();
   return t.access_token;
+}
+
+/** The user's most recent successful auto-update, from what Kumostamp already recorded. */
+export async function lastMalPush(env: Env, userId: string): Promise<MalResult | null> {
+  const row = await env.DB.prepare(
+    "SELECT mal_id, progress, title, at FROM mal_pushes WHERE user_id = ? ORDER BY at DESC LIMIT 1",
+  )
+    .bind(userId)
+    .first<{ mal_id: number; progress: number; title: string | null; at: number }>();
+  if (!row) return null;
+  return { title: row.title || "#" + row.mal_id, progress: row.progress, outcome: "updated", at: row.at };
 }
 
 interface ListStatus {

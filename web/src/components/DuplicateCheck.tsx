@@ -9,6 +9,7 @@ import { LABEL } from "../lib/catalog";
 import { findDuplicates, preferredKeep, type DuplicatePair } from "../lib/duplicates";
 import { KS, type Series } from "../lib/ks";
 import { op, useStore } from "../lib/store";
+import { useOnboardingState } from "./Onboarding";
 import { Poster } from "./Sheet";
 import { useUi } from "./ui";
 
@@ -28,14 +29,16 @@ function facts(s: Series): string {
 export function DuplicateCheck() {
   const { db, mode } = useStore();
   const { addRequest, mergeRequest } = useUi();
+  const onboarding = useOnboardingState();
   const { pathname } = useLocation();
 
   const pairs = useMemo(() => (mode === "pending" || db.sample ? [] : findDuplicates(db)), [db, mode]);
   const pair = pairs[0] || null;
   const onLibrary = pathname === "/" || pathname.startsWith("/series/");
+  const onboardingOpen = mode === "extension" && !onboarding.done;
 
-  // Don't cover a panel the user opened; it comes back when that closes.
-  if (!pair || !onLibrary || addRequest || mergeRequest) return null;
+  // Don't cover a panel or the onboarding wizard; it comes back when that closes.
+  if (!pair || !onLibrary || addRequest || mergeRequest || onboardingOpen) return null;
   return <DuplicateDialog key={`${pair.a.key}|${pair.b.key}`} pair={pair} />;
 }
 

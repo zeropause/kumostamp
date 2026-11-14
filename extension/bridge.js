@@ -26,10 +26,40 @@
     const post = (payload) => window.postMessage(Object.assign({ source: TO_PAGE }, payload), origin);
     let trusted = false;
 
+    /** What the homepage's AniList chip may know: no token, just reachability and the last push. */
+    async function anilistState() {
+      const accounts = await chrome.runtime.sendMessage({ type: "accountStatus" }).catch(() => null);
+      const settings = await chrome.runtime.sendMessage({ type: "getSettings" }).catch(() => null);
+      const last = await chrome.runtime.sendMessage({ type: "anilistLast" }).catch(() => null);
+      return {
+        connected: !!(accounts && accounts.accounts && accounts.accounts.anilist),
+        syncOn: !!(settings && settings.settings && settings.settings.anilistSync),
+        last: (last && last.last) || null,
+      };
+    }
+
+    /** Discord Rich Presence status and privacy toggles for the library's onboarding/settings. */
+    async function discordState(force) {
+      const [presence, settingsRes] = await Promise.all([
+        chrome.runtime.sendMessage({ type: "presenceStatus", force: !!force }).catch(() => null),
+        chrome.runtime.sendMessage({ type: "getSettings" }).catch(() => null),
+      ]);
+      const s = (settingsRes && settingsRes.settings) || {};
+      return {
+        enabled: !!s.discordRpc,
+        showTitle: s.discordShowTitle !== false,
+        showTime: s.discordShowTime !== false,
+        helper: (presence && presence.helper) || { ok: false, discord: "unknown" },
+        live: (presence && presence.live) || null,
+        error: (presence && presence.error) || "",
+      };
+    }
+
     async function pushDb() {
       if (!trusted) return;
       const res = await chrome.runtime.sendMessage({ type: "getDb" });
-      post({ type: "db", db: res && res.db, version: chrome.runtime.getManifest().version });
+      const [anilist, discord] = await Promise.all([anilistState(), discordState(false)]);
+      post({ type: "db", db: res && res.db, version: chrome.runtime.getManifest().version, anilist, discord });
     }
 
     async function checkTrust() {
@@ -54,6 +84,24 @@
         }
         return;
       }
+      if (type === "discord") {
+        if (!trusted) return post({ type: "discordAck", id, error: "This address isn't your Kumostamp library yet. Allow it in the extension popup." });
+        try {
+          const patch = e.data.patch;
+          if (patch && typeof patch === "object") {
+            const allowed = {};
+            for (const k of ["discordRpc", "discordShowTitle", "discordShowTime"]) {
+              if (typeof patch[k] === "boolean") allowed[k] = patch[k];
+            }
+            if (Object.keys(allowed).length) await chrome.runtime.sendMessage({ type: "setSettings", settings: allowed });
+          }
+          const discord = await discordState(!!e.data.force);
+          post({ type: "discordAck", id, discord });
+        } catch (err) {
+          post({ type: "discordAck", id, error: String((err && err.message) || err) });
+        }
+        return;
+      }
       if (type === "op") {
         if (!trusted) return post({ type: "ack", id, error: "This address isn't your Kumostamp library yet. Allow it in the extension popup." });
         try {
@@ -70,6 +118,9 @@
       if (area !== "local") return;
       if (changes[SETTINGS_KEY]) checkTrust(); // allowed (or revoked) from the popup
       if (changes[DB_KEY] && trusted) post({ type: "db", db: changes[DB_KEY].newValue });
+      // An auto-update to AniList lands here, not in ks:db: re-answer with the fresh state.
+      if (changes["ks:anilist-sync"] && trusted) pushDb();
+      if (changes["ks:accounts"] && trusted) pushDb();
     });
 
     checkTrust();

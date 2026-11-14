@@ -5,6 +5,23 @@
 import { useSyncExternalStore } from "react";
 import { KS, type Db, type Op } from "./ks";
 
+/** AniList state handed over with the extension's db handshake (no token, just state). */
+export interface AnilistState {
+  connected: boolean;
+  syncOn: boolean;
+  last: { title: string; progress: number; total?: number | null; at: number } | null;
+}
+
+/** Discord Rich Presence state and toggles handed over by the extension bridge. */
+export interface DiscordState {
+  enabled: boolean;
+  showTitle: boolean;
+  showTime: boolean;
+  helper: { ok: boolean; discord: string };
+  live: { title: string; episode: number | null; paused: boolean; ended: boolean } | null;
+  error: string;
+}
+
 const LOCAL_KEY = "kumostamp:db";
 const TO_EXT = "kumostamp-web";
 const FROM_EXT = "kumostamp-ext";
@@ -16,9 +33,11 @@ export interface Snapshot {
   db: Db;
   mode: Mode;
   extVersion: string | null;
+  anilist: AnilistState | null;
+  discord: DiscordState | null;
 }
 
-let snapshot: Snapshot = { db: KS.emptyDb(), mode: "pending", extVersion: null };
+let snapshot: Snapshot = { db: KS.emptyDb(), mode: "pending", extVersion: null, anilist: null, discord: null };
 const listeners = new Set<() => void>();
 const pending = new Map<number, { resolve: () => void; reject: (e: Error) => void }>();
 let seq = 0;
@@ -54,8 +73,23 @@ function onMessage(e: MessageEvent) {
   if (e.data.type === "db") {
     const wasLocal = snapshot.mode !== "extension";
     const db: Db = e.data.db && e.data.db.series ? e.data.db : KS.emptyDb();
-    set({ mode: "extension", db, extVersion: e.data.version || snapshot.extVersion });
+    set({
+      mode: "extension",
+      db,
+      extVersion: e.data.version || snapshot.extVersion,
+      anilist: e.data.anilist && typeof e.data.anilist === "object" && typeof e.data.anilist.connected === "boolean" ? e.data.anilist : snapshot.anilist,
+      discord: e.data.discord && typeof e.data.discord === "object" && typeof e.data.discord.enabled === "boolean" ? e.data.discord : snapshot.discord,
+    });
     if (wasLocal) adoptLocalMarks();
+  } else if (e.data.type === "discordAck") {
+    if (e.data.discord && typeof e.data.discord === "object") {
+      set({ discord: e.data.discord });
+    }
+    const p = pending.get(e.data.id);
+    if (!p) return;
+    pending.delete(e.data.id);
+    if (e.data.error) p.reject(new Error(e.data.error));
+    else p.resolve();
   } else if (e.data.type === "untrusted") {
     if (snapshot.mode !== "extension") set({ mode: "untrusted", db: snapshot.mode === "pending" ? readLocal() : snapshot.db });
   } else if (e.data.type === "ack") {
@@ -149,6 +183,23 @@ export function getMode(): Mode {
 export function subscribe(fn: () => void) {
   listeners.add(fn);
   return () => listeners.delete(fn);
+}
+
+export function updateDiscord(
+  patch?: { discordRpc?: boolean; discordShowTitle?: boolean; discordShowTime?: boolean },
+  force?: boolean,
+): Promise<void> {
+  if (snapshot.mode !== "extension") return Promise.resolve();
+  const id = ++seq;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    window.postMessage({ source: TO_EXT, type: "discord", id, patch, force }, targetOrigin());
+    setTimeout(() => {
+      if (!pending.has(id)) return;
+      pending.delete(id);
+      reject(new Error("The extension did not answer."));
+    }, 5000);
+  });
 }
 
 export function useStore(): Snapshot {

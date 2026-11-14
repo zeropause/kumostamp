@@ -1,0 +1,11 @@
+{
+  "name": "kumostamp-discord-helper",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local helper that carries Kumostamp's playback state to Discord Rich Presence.",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dry": "node index.mjs --dry-run"
+  }
+}

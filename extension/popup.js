@@ -356,6 +356,9 @@
     const s = state.settings;
     $("#autosave").checked = !!s.autoSave;
     $("#autoresume").checked = !!s.autoResume;
+    $("#discord-rpc").checked = !!s.discordRpc;
+    $("#discord-title").checked = s.discordShowTitle !== false;
+    $("#discord-time").checked = s.discordShowTime !== false;
     $("#library-url").value = s.libraryUrl;
     $("#open-library").href = s.libraryUrl;
   }
@@ -373,6 +376,48 @@
     chrome.tabs.create({ url: state.settings.libraryUrl });
   });
 
+  /* ---------------- Discord Rich Presence ---------------- */
+
+  let discord = null;
+
+  function renderDiscord() {
+    if (!discord) return;
+    const helper = (discord.helper && discord.helper.ok) || false;
+    const on = !!discord.enabled;
+    $("#discord-rpc-row").hidden = false;
+    $("#discord-title-row").hidden = !on;
+    $("#discord-time-row").hidden = !on;
+    $("#discord-hint").hidden = helper;
+    $("#discord-rpc").checked = on;
+    const discordError = helper ? discord.error || "" : "";
+    $("#discord-error").textContent = discordError;
+    $("#discord-error").hidden = !discordError;
+    $("#discord-state").textContent = !helper
+      ? "Helper not running"
+      : discord.helper.discord !== "connected"
+        ? "Waiting for Discord"
+        : !on
+          ? "Ready"
+          : discord.live
+            ? `Live · ${discord.live.title}${discord.live.episode != null ? ` · Ep ${discord.live.episode}` : ""}${discord.live.paused ? " · paused" : ""}`
+            : "Ready";
+  }
+
+  async function loadDiscord() {
+    discord = await send({ type: "presenceStatus" });
+    renderDiscord();
+  }
+
+  async function setDiscord(key, value) {
+    const r = await send({ type: "setSettings", settings: { [key]: value } });
+    state.settings = r.settings;
+    await loadDiscord();
+  }
+
+  $("#discord-rpc").addEventListener("change", (e) => setDiscord("discordRpc", e.target.checked));
+  $("#discord-title").addEventListener("change", (e) => setDiscord("discordShowTitle", e.target.checked));
+  $("#discord-time").addEventListener("change", (e) => setDiscord("discordShowTime", e.target.checked));
+
   /* ---------------- live refresh ---------------- */
 
   async function refresh(full) {
@@ -389,6 +434,7 @@
     }
     renderRecent();
     renderMarks();
+    loadDiscord();
   }
 
   /* ---------------- connected accounts ---------------- */
@@ -514,6 +560,7 @@
   renderSettings();
   loadAccounts();
   loadCloud();
+  loadDiscord();
   refreshTimer = setInterval(refresh, 2000);
   window.addEventListener("unload", () => clearInterval(refreshTimer));
 })();

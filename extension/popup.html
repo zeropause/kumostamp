@@ -83,6 +83,31 @@
           Login opens your Kumostamp library, where you can sign in with MyAnimeList or AniList.
         </p>
       </div>
+      <div class="account">
+        <div class="account-row">
+          <span class="account-name">Discord</span>
+          <span class="account-state" id="discord-state" aria-live="polite"></span>
+        </div>
+        <label class="switch" id="discord-rpc-row" hidden>
+          <input type="checkbox" id="discord-rpc">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span>Show what I'm watching in Discord</span>
+        </label>
+        <label class="switch" id="discord-title-row" hidden>
+          <input type="checkbox" id="discord-title">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span>Show the series title</span>
+        </label>
+        <label class="switch" id="discord-time-row" hidden>
+          <input type="checkbox" id="discord-time">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span>Show progress</span>
+        </label>
+        <p class="account-error" id="discord-error" role="alert" hidden></p>
+        <p class="account-hint" id="discord-hint" hidden>
+          Needs the desktop helper running: <code>node helper/index.mjs</code>, then restart Discord desktop if it is closed.
+        </p>
+      </div>
     </details>
     <details class="settings">
       <summary>Library address</summary>

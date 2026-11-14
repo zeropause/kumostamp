@@ -4,3 +4,7 @@ web/dist/
 *.zip
 .icon-render-profile/
 .vibe-wise
+
+# Discord helper: local pairing and Discord application id
+helper/config.json
+helper/.state.json

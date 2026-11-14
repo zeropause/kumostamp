@@ -48,6 +48,26 @@ Login AniList (opsional) butuh client di https://anilist.co/settings/developer d
 
 Setelah extension di-reload, refresh juga tab website yang sedang terbuka.
 
+### Discord Rich Presence (opsional)
+
+Menampilkan series, episode, dan progress bar di profil Discord. Hanya tampil kalau **Discord desktop** sedang berjalan, dan bisa dilihat teman.
+
+1. Buat application di https://discord.com/developers/applications, salin **Application ID**, lalu unggah tiga asset di *Rich Presence → Art Assets*: `kumostamp`, `playing`, `paused` (128×128 atau lebih besar).
+2. Jalankan helper (tidak ada dependency yang perlu di-install):
+
+   ```bash
+   cd helper
+   cp config.example.json config.json   # isi clientId
+   node index.mjs
+   ```
+
+   Log yang benar: `listening on http://127.0.0.1:47834` lalu `discord connected`.
+3. Reload extension, buka popup → **Connected accounts → Discord** → nyalakan *Show what I'm watching in Discord*.
+
+Baris pertama card ("Watching …") berisi judul series, bukan nama aplikasi: helper mengisi field `name` di activity. Baris itu kembali menjadi "Kumostamp" kalau toggle *Show the series title* dimatikan. Saat pause, progress bar diganti keterangan posisi (`Ep 5 · Paused at 16:27`) karena Discord menghitung bar di kliennya sendiri dan tidak bisa dibekukan. Bar kembali muncul saat play, dan hilang sama sekali kalau *Show progress* dimatikan.
+
+Helper boleh ditutup kapan saja; mark tetap tersimpan. Kalau helper tidak jalan, popup menampilkan *Helper not running*. Detail dan troubleshooting ada di [helper/README.md](helper/README.md).
+
 ### Deploy
 
 ```bash
@@ -94,6 +114,9 @@ web/
   src/styles/          tokens.css (sumber utama token desain), app.css
   worker/              API: auth MAL, library, sinkron MAL
   migrations/          skema D1
+helper/
+  index.mjs            server lokal 127.0.0.1 + watchdog; menerima state dari extension
+  discord.mjs          klien IPC Discord (socket persisten, reconnect sendiri)
 scripts/
   sync-shared.mjs      salin core.js, catalog.js, dan tokens.css di antara kedua bagian
   render-icons.mjs     render ikon PNG extension dari logo
@@ -107,4 +130,5 @@ Setelah mengedit `extension/lib/core.js`, `extension/lib/catalog.js`, atau `web/
 - Judul diambil dari halaman, jadi kadang perlu dikoreksi sekali per situs.
 - Beberapa player custom menimpa `currentTime`. Kalau begitu, salin waktunya (tombol Copy) dan seek manual.
 - Series dari TVmaze atau IMDb tidak ikut ke list MAL/AniList. Season yang nomor episodenya berlanjut (Ep 29 yang sebenarnya S2 Ep 5) belum didukung.
+- Discord Rich Presence butuh helper desktop (`helper/`) dan Discord desktop; tidak tampil dari Discord web atau mobile.
 - Belum ada tes otomatis.

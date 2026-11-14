@@ -99,6 +99,18 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .link-state::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); flex: none; }
 .link-state[data-state="extension"]::before { background: var(--rule-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rule-strong) 25%, transparent); }
 .link-state[data-state="local"]::before { background: transparent; border: 1.5px solid var(--ink-3); }
+
+/* Homepage status chips: connection proof for extension, MAL, AniList. */
+.status-chips { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 20px 0; justify-content: space-between; width: 100%; max-width: 1180px; margin-inline: auto; }
+.status-chip { display: inline-flex; align-items: baseline; gap: 10px; padding: 6px 12px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--paper) 70%, var(--print) 30%); clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 8px 100%); }
+.status-chip strong { font: 600 15px/1.1 var(--font-form); letter-spacing: .01em; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; }
+.status-chip strong::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--rule-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rule-strong) 22%, transparent); }
+.status-chip small { font: 500 12px/1.2 var(--font-body); color: var(--ink-3); }
+.status-chip[data-state="dim"] strong::before { background: transparent; border: 1.5px solid var(--ink-3); box-shadow: none; }
+.status-chip[data-state="dim"] small { font-style: italic; }
+.status-chip[data-state="warn"] strong::before { background: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 25%, transparent); }
+.status-chip[data-state="warn"] small { color: var(--red-ink); }
+
 .tb-actions { flex-direction: row; align-items: center; gap: 8px; padding-inline: 16px; }
 .tb-actions label.btn { cursor: pointer; }
 
@@ -195,6 +207,50 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .dupe-card[aria-pressed="true"] .dupe-card-keep { color: var(--red-ink); }
 .dupe-keep { margin: 16px 0 0; color: var(--ink-2); font-size: 14px; }
 .dupe-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+
+/* ---------- onboarding wizard ---------- */
+.onboard-dialog { width: min(640px, calc(100vw - 32px)); }
+.onboard-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.onboard-top .dupe-kicker { margin: 0; }
+.onboard-dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.onboard-dots button {
+  appearance: none;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-3);
+  font: 700 12px/1 var(--font-time);
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.onboard-dots li.is-current button { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.onboard-dots li.is-done button { background: var(--print); color: var(--ink); }
+.onboard-brand-title { display: flex; align-items: center; gap: 12px; }
+.onboard-card {
+  margin-top: 18px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--rule-strong);
+  background: var(--print);
+}
+.onboard-card[data-connected="true"] { border-left: 4px solid var(--rule-strong); }
+.onboard-card > p { margin: 8px 0 0; color: var(--ink-2); font-size: 15px; }
+.onboard-connect-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.onboard-connect-row p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 42ch; }
+.onboard-who { margin-top: 10px; }
+.onboard-who p { margin: 2px 0 0; }
+.onboard-switches { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); display: grid; gap: 8px; }
+.onboard-check { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; }
+.onboard-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); }
+.onboard-helper-guide { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); }
+.onboard-helper-guide ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.onboard-helper-guide code { font: 600 12.5px/1.2 var(--font-time); padding: 1px 5px; background: var(--paper); border: 1px solid var(--rule); }
+.onboard-actions { justify-content: space-between; }
 
 /* ---------- main ---------- */
 main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 32px) 96px; }
@@ -584,6 +640,7 @@ tr.is-unassigned { background: color-mix(in srgb, var(--print) 45%, transparent)
 .brand-logo { flex: none; display: inline-block; width: .9em; height: .9em; background: var(--brand, currentColor); -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
 .brand-myanimelist { --logo: url("/logos/myanimelist.svg"); --brand: #2e51a2; }
 .brand-anilist { --logo: url("/logos/anilist.svg"); --brand: #02a9ff; }
+.brand-discord { --logo: url("/logos/discord.svg"); --brand: #5865f2; }
 .brand-trakt { --logo: url("/logos/trakt.svg"); --brand: #ed1c24; }
 .brand-letterboxd { --logo: url("/logos/letterboxd.svg"); }
 .login-soon { color: var(--ink-3); }

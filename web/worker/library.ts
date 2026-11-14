@@ -5,7 +5,7 @@
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { KS, type Db, type Series } from "../src/lib/ks";
-import { pushToMal } from "./mal-sync";
+import { pushToMal, lastMalPush } from "./mal-sync";
 import { currentUser, deviceUser, type User } from "./session";
 
 const library = new Hono<{ Bindings: Env; Variables: { user: User } }>();
@@ -77,7 +77,10 @@ library.post(
 library.post("/mal-sync", async (c) => {
   const userId = c.get("user").id;
   const { db } = await load(c.env, userId);
-  return c.json({ results: await pushToMal(c.env, userId, null, db) });
+  const results = await pushToMal(c.env, userId, null, db);
+  // The newest recorded auto-update, for the homepage's "MAL connected" chip.
+  const lastPush = await lastMalPush(c.env, userId);
+  return c.json({ results, lastPush });
 });
 
 export default library;
